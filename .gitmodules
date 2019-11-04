@@ -1,3 +1,4 @@
 [submodule "dashboard"]
 	path = dashboard
-	url = https://github.com/BLHT/incubator-apisix-dashboard-built.git
+	url = https://github.com/BLHT/incubator-apisix-dashboard-build.git
+	branch = master

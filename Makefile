@@ -121,7 +121,7 @@ install:
 ifneq ($(WITHOUT_DASHBOARD),1)
 	$(INSTALL) -d /usr/local/apisix/dashboard
 	cd `mktemp -d /tmp/apisix.XXXXXX` && \
-		git clone https://github.com/apache/incubator-apisix.git apisix --recursive && \
+		git clone https://github.com/BLHT/incubator-apisix.git apisix --recursive && \
 		cd apisix && \
 		cp -r dashboard/* /usr/local/apisix/dashboard
 	chmod -R 755 /usr/local/apisix/dashboard

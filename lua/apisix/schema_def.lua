@@ -1,8 +1,24 @@
+--
+-- Licensed to the Apache Software Foundation (ASF) under one or more
+-- contributor license agreements.  See the NOTICE file distributed with
+-- this work for additional information regarding copyright ownership.
+-- The ASF licenses this file to You under the Apache License, Version 2.0
+-- (the "License"); you may not use this file except in compliance with
+-- the License.  You may obtain a copy of the License at
+--
+--     http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
+--
 local schema    = require('apisix.core.schema')
 local setmetatable = setmetatable
+local error     = error
 
-local _M = {version = 0.3}
-setmetatable(_M, {__index = schema})
+local _M = {version = 0.4}
 
 
 local plugins_schema = {
@@ -236,7 +252,8 @@ local upstream_schema = {
         key = {
             description = "the key of chash for dynamic load balancing",
             type = "string",
-            enum = {"remote_addr"},
+            pattern = [[^((uri|server_name|server_addr|request_uri|remote_port]]
+                      .. [[|remote_addr|query_string|host|hostname)|arg_[0-9a-zA-z_-]+)$]],
         },
         desc = {type = "string", maxLength = 256},
         id = id_schema
@@ -246,11 +263,18 @@ local upstream_schema = {
 }
 
 
-
-local route = {
+_M.route = {
     type = "object",
     properties = {
         uri = {type = "string", minLength = 1, maxLength = 4096},
+        uris = {
+            type = "array",
+            items = {
+                description = "HTTP uri",
+                type = "string",
+            },
+            uniqueItems = true,
+        },
         desc = {type = "string", maxLength = 256},
 
         methods = {
@@ -290,6 +314,11 @@ local route = {
                 }
             }
         },
+        filter_func = {
+            type = "string",
+            minLength = 10,
+            pattern = [[^function]],
+        },
 
         plugins = plugins_schema,
         upstream = upstream_schema,
@@ -306,10 +335,12 @@ local route = {
         {required = {"upstream", "uri"}},
         {required = {"upstream_id", "uri"}},
         {required = {"service_id", "uri"}},
+        {required = {"upstream", "uris"}},
+        {required = {"upstream_id", "uris"}},
+        {required = {"service_id", "uris"}},
     },
     additionalProperties = false,
 }
-_M.route = route
 
 
 _M.service = {
@@ -407,6 +438,12 @@ _M.stream_route = {
         plugins = plugins_schema,
     }
 }
+
+
+setmetatable(_M, {
+    __index = schema,
+    __newindex = function() error("no modification allowed") end,
+})
 
 
 return _M

@@ -1,3 +1,22 @@
+<!--
+#
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+-->
+
 ## Table of Contents
 - [**APISIX**](#apisix)
 - [**APISIX Config**](#apisix-config)
@@ -211,7 +230,7 @@ In addition to the basic complex equalization algorithm selection, APISIX's Upst
 |-------         |-----|------|
 |type            |required|`roundrobin` supports the weight of the load, `chash` consistency hash, pick one of them.|
 |nodes           |required|Hash table, the key of the internal element is the upstream machine address list, the format is `Address + Port`, where the address part can be IP or domain name, such as `192.168.1.100:80`, `foo.com:80`, etc. Value is the weight of the node. In particular, when the weight value is `0`, it has a special meaning, which usually means that the upstream node is invalid and never wants to be selected.|
-|key             |required|This option is only valid if the type is `chash`. Find the corresponding node `id` according to `key`, the same `key` in the same object, always return the same id.|
+|key             |required|This option is only valid if the type is `chash`. Find the corresponding node `id` according to `key`, the same `key` in the same object, always return the same id. For now, it support nginx built-in variables like `uri, server_name, server_addr, request_uri, remote_port, remote_addr, query_string, host, hostname, arg_***`, `arg_***` is arguments in the request line, [Nginx variables list](http://nginx.org/en/docs/varindex.html)|
 |checks          |optional|Configure the parameters of the health check. For details, refer to [health-check](health-check.md).|
 |retries         |optional|Pass the request to the next upstream using the underlying Nginx retry mechanism, the retry mechanism is not enabled by default.|
 

@@ -15,7 +15,7 @@
 -- limitations under the License.
 --
 package = "apisix"
-version = "master-0"
+version = "hellotalk_master-0"
 supported_platforms = {"linux", "macosx"}
 
 source = {

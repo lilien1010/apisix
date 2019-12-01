@@ -24,10 +24,9 @@ source = {
 }
 
 description = {
-    summary = "APISIX is a cloud-native microservices API gateway, delivering the ultimate performance, security, open source and scalable platform for all your APIs and microservices.",
+    summary = "Apache APISIX(incubating) is a cloud-native microservices API gateway, delivering the ultimate performance, security, open source and scalable platform for all your APIs and microservices.",
     homepage = "https://github.com/apache/incubator-apisix",
     license = "Apache License 2.0",
-    maintainer = "Yuansheng Wang <membphis@gmail.com>"
 }
 
 dependencies = {
@@ -41,13 +40,14 @@ dependencies = {
     "lua-resty-cookie = 0.1.0",
     "lua-resty-session = 2.24",
     "opentracing-openresty = 0.1",
-    "lua-resty-radixtree = 1.5",
+    "lua-resty-radixtree = 1.6-1",
     "lua-protobuf = 0.3.1",
     "lua-resty-openidc = 1.7.2-1",
     "luafilesystem = 1.7.0-2",
     "lua-tinyyaml = 0.1",
-    "iresty-nginx-lua-prometheus = 0.20190917",
+    "lua-resty-prometheus = 1.0",
     "jsonschema = 0.4",
+    "lua-resty-ipmatcher = 0.3",
 }
 
 build = {

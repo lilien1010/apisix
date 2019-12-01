@@ -19,10 +19,11 @@ use t::APISIX;
 no_root_location();
 
 my $travis_os_name = $ENV{TRAVIS_OS_NAME};
-if ($travis_os_name eq "osx") {
-    plan 'no_plan';
+if ((defined $travis_os_name) && $travis_os_name eq "linux") {
+    plan(skip_all =>
+      "skip under Travis CI inux environment which doesn't work well with IPv6");
 } else {
-    plan(skip_all => "skip remote address(IPv6) under linux");
+    plan 'no_plan';
 }
 
 run_tests();

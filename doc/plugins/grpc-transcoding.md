@@ -17,14 +17,15 @@
 #
 -->
 
-[中文](grpc-transcoding-cn.md)
-# grpc-transcoding
+[Chinese](grpc-transcoding-cn.md)
+
+## Name
 
 HTTP(s) -> APISIX -> gRPC server
 
 ### Proto
 
-#### Parameters
+#### Attributes
 * `content`: `.proto` file's content.
 
 #### Add a proto
@@ -48,20 +49,20 @@ curl http://127.0.0.1:9080/apisix/admin/proto/1 -X PUT -d '
 }'
 ```
 
-### Parameters
+## Attributes
 
-* `proto_id`: `.proto` content id.
-* `service`:  the grpc service name.
-* `method`:   the method name of grpc service.
+|Name          |Requirement  |Description|
+|---------     |--------|-----------|
+| proto_id         |required|`.proto` content id.|
+| service         |required|the grpc service name.|
+| method         |required|the method name of grpc service.|
 
-### example
-
-#### enable plugin
+## How To Enable
 
 Here's an example, to enable the grpc-transcode plugin to specified route:
 
 * attention: the route's option `service_protocol` must be `grpc`
-* the grpc server example：[grpc_server_example](https://github.com/nic-chen/grpc_server_example)
+* the grpc server example：[grpc_server_example](https://github.com/iresty/grpc_server_example)
 
 ```shell
 curl http://127.0.0.1:9080/apisix/admin/routes/111 -X PUT -d '
@@ -86,7 +87,7 @@ curl http://127.0.0.1:9080/apisix/admin/routes/111 -X PUT -d '
 ```
 
 
-#### test plugin
+## Test Plugin
 
 The above configuration proxy :
 ```shell

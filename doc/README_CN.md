@@ -24,8 +24,7 @@ Reference document
 * [APISIX 说明](../README_CN.md)
 * [架构设计](architecture-design-cn.md)
 * [压力测试](benchmark-cn.md)
-* [搭建开发环境](dev-manua-cnl.md)
-* [安装依赖](install-dependencies.md): How to install dependencies for different OS.
+* [如何构建 Apache APISIX](how-to-build-cn.md)
 * [健康检查](health-check.md): Enable health check on the upstream node, and will automatically filter unhealthy nodes during load balancing to ensure system stability.
 * Router(路由)
     * [radixtree](router-radixtree.md)
@@ -55,3 +54,4 @@ Reference document
 * [ip-restriction](plugins/ip-restriction-cn.md): IP 黑白名单。
 * openid-connect
 * [redirect](plugins/redirect-cn.md): URI 重定向。
+* [response-rewrite](plugins/response-rewrite-cn.md): 支持自定义修改返回内容的 `status code`、`body`、`headers`。

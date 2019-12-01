@@ -17,22 +17,12 @@
 #
 -->
 
-[Chinese](limit-count-cn.md)
+[中文](limit-count-cn.md)
+# limit-count
 
-# Summary
-- [**Name**](#name)
-- [**Attributes**](#attributes)
-- [**How To Enable**](#how-to-enable)
-- [**Test Plugin**](#test-plugin)
-- [**Disable Plugin**](#disable-plugin)
+### Parameters
 
-## Name
-
-Limit request rate by a fixed number of requests in a given time window.
-
-## Attributes
-
-|Name          |Requirement  |Description|
+|name          |option  |description|
 |---------     |--------|-----------|
 |count         |required|the specified number of requests threshold.|
 |time_window   |required|the time window in seconds before the request count is reset.|
@@ -43,7 +33,10 @@ Limit request rate by a fixed number of requests in a given time window.
 |redis_port    |optional|When using the `redis` policy, this property specifies the port of the Redis server. The default port is 6379.|
 |redis_timeout |optional|When using the `redis` policy, this property specifies the timeout in milliseconds of any command submitted to the Redis server. The default timeout is 1000 ms(1 second).|
 
-## How To Enable
+
+### example
+
+#### enable plugin
 
 Here's an example, enable the `limit count` plugin on the specified route:
 
@@ -103,7 +96,7 @@ curl -i http://127.0.0.1:9080/apisix/admin/routes/1 -X PUT -d '
 }'
 ```
 
-## Test Plugin
+#### test plugin
 The above configuration limits access to only 2 times in 60 seconds. The first two visits will be normally:
 ```shell
 curl -i http://127.0.0.1:9080/index.html
@@ -140,7 +133,7 @@ Server: APISIX web server
 
 This means that the `limit count` plugin is in effect.
 
-## Disable Plugin
+#### disable plugin
 When you want to disable the `limit count` plugin, it is very simple,
  you can delete the corresponding json configuration in the plugin configuration,
   no need to restart the service, it will take effect immediately:

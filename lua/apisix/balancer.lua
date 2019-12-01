@@ -240,8 +240,7 @@ local function pick_server(route, ctx)
 
     local server, err = server_picker.get(ctx)
     if not server then
-        err = err or "no valid upstream node"
-        return nil, nil, "failed to find valid upstream server, " .. err
+        return nil, nil, "failed to find valid upstream server" .. err
     end
 
     if up_conf.timeout then

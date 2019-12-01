@@ -17,7 +17,7 @@
 #
 -->
 
-[Chinese](stream-proxy-cn.md)
+[中文](stream-proxy-cn.md)
 
 # Stream Proxy
 

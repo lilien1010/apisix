@@ -17,7 +17,7 @@
 #
 -->
 
-[Chinese](https-cn.md)
+[中文](https-cn.md)
 ### HTTPS
 
 `APISIX` supports to load a specific SSL certificate by TLS extension Server Name Indication (SNI).

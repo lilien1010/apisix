@@ -17,32 +17,20 @@
 #
 -->
 
-[Chinese](serverless-cn.md)
-
-# Summary
-- [**Name**](#name)
-- [**Attributes**](#attributes)
-- [**How To Enable**](#how-to-enable)
-- [**Test Plugin**](#test-plugin)
-- [**Disable Plugin**](#disable-plugin)
-
-## Name
-
+[中文](serverless-cn.md)
+# serverless
 There are two plug-ins for serverless, namely `serverless-pre-function` and `serverless-post-function`.
 
 The former runs at the beginning of the specified phase, while the latter runs at the end of the specified phase.
 
 Both plug-ins receive the same parameters.
 
-## Attributes
+### Parameters
+* `phase`: The default phase is `access`, if not specified. The valid phases are: `rewrite`, `access`,`Header_filer`, `body_filter`, `log` and `balancer`.
 
-|Name          |Requirement  |Description|
-|---------     |--------|-----------|
-| phase         |optional|The default phase is `access`, if not specified. The valid phases are: `rewrite`, `access`,`Header_filer`, `body_filter`, `log` and `balancer`.|
-| functions         |required|A list of functions that are specified to run is an array type, which can contain either one function or multiple functions, executed sequentially.|
+* `functions`: A list of functions that are specified to run is an array type, which can contain either one function or multiple functions, executed sequentially.
 
-
-Note that only function is accepted here, not other types of Lua code. For example, anonymous functions are legal:<br>
+Note that only function is accepted here, not other types of Lua code. For example, anonymous functions are legal:
 ```
 return function()
     ngx.log(ngx.ERR, 'one')
@@ -58,14 +46,15 @@ return function()
 end
 ```
 
-But code that is not a function type is illegal:
+ But code that is not a function type is illegal:
  ```
 local count = 1
 ngx.say(count)
 ```
 
-## How To Enable
+### Example
 
+#### enable plugin
 Here's an example, enable the serverless plugin on the specified route:
 
 ```shell
@@ -89,8 +78,7 @@ curl -i http://127.0.0.1:9080/apisix/admin/routes/1 -X PUT -d '
 }'
 ```
 
-## Test Plugin
-
+#### test plugin
  Use curl to access:
  ```shell
 curl -i http://127.0.0.1:9080/index.html
@@ -99,8 +87,7 @@ curl -i http://127.0.0.1:9080/index.html
 Then you will find the message 'serverless pre-function' in the error.log,
 which indicates that the specified function is in effect.
 
-## Disable Plugin
-
+#### disable plugin
 When you want to disable the serverless plugin, it is very simple,
  you can delete the corresponding json configuration in the plugin configuration,
   no need to restart the service, it will take effect immediately:

@@ -17,7 +17,7 @@
 #
 -->
 
-[Chinese](key-auth-cn.md)
+[中文](key-auth-cn.md)
 
 # Summary
 - [**Name**](#name)
@@ -35,10 +35,7 @@ Add Key Authentication (also sometimes referred to as an API key) to a Service o
 
 ## Attributes
 
-|Name          |Requirement  |Description|
-|---------     |--------|-----------|
-| key         |required|different consumer objects should use different values, it should be unique.|
-
+* `key`: different consumer objects should use different values, it should be unique.
 
 ## How To Enable
 

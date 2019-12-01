@@ -17,27 +17,22 @@
 #
 -->
 
-[Chinese](redirect-cn.md)
+[中文](redirect-cn.md)
 
-# Summary
-- [**Name**](#name)
-- [**Attributes**](#attributes)
-- [**How To Enable**](#how-to-enable)
-- [**Test Plugin**](#test-plugin)
-- [**Disable Plugin**](#disable-plugin)
-
-## Name
+# redirect
 
 URI redirect.
 
-## Attributes
+### Parameters
 
-|Name    |Requirement|Description|
+|Name    |Required|Description|
 |------- |-----|------|
 |uri     |required| New uri which can contain Ningx variable, eg: `/test/index.html`, `$uri/index.html`. You can refer to variables in a way similar to `${xxx}` to avoid ambiguity, eg: `${uri}foo/index.html`. If you just need the original `$` character, add `\` in front of it, like this one: `/\$foo/index.html`. If you refer to a variable name that does not exist, this will not produce an error, and it will be used as an empty string.|
-|ret_code|optional|Response code, the default value is `302`.|
+|ret_code|option|Response code, the default value is `302`.|
 
-## How To Enable
+### Example
+
+#### Enable Plugin
 
 Here's a mini example, enable the `redirect` plugin on the specified route:
 
@@ -81,7 +76,7 @@ curl http://127.0.0.1:9080/apisix/admin/routes/1 -X PUT -d '
 }'
 ```
 
-## Test Plugin
+#### Test Plugin
 
 Testing based on the above examples :
 
@@ -101,7 +96,7 @@ We can check the response code and the response header `Location`.
 
 It shows that the `redirect` plugin is in effect.
 
-## Disable Plugin
+#### Disable Plugin
 
 When you want to disable the `redirect` plugin, it is very simple,
  you can delete the corresponding json configuration in the plugin configuration,

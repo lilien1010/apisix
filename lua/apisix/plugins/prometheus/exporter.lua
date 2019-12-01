@@ -14,7 +14,7 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 --
-local base_prometheus = require("resty.prometheus")
+local base_prometheus = require("nginx.prometheus")
 local core      = require("apisix.core")
 local ipairs    = ipairs
 local ngx_capture = ngx.location.capture
@@ -27,9 +27,10 @@ local DEFAULT_BUCKETS = { 1, 2, 5, 7, 10, 15, 20, 25, 30, 40, 50, 60, 70,
     2000, 5000, 10000, 30000, 60000 }
 
 local metrics = {}
+local tmp_tab = {}
 
 
-local _M = {version = 0.3}
+local _M = {version = 0.2}
 
 
 function _M.init()
@@ -60,27 +61,27 @@ end
 
 
 function _M.log(conf, ctx)
-    local vars = ctx.var
+    core.table.clear(tmp_tab)
 
     local service_name
     if ctx.matched_route and ctx.matched_route.value then
-        service_name = ctx.matched_route.value.desc or
-                       ctx.matched_route.value.id
-    else
-        service_name = vars.host
+        service_name = ctx.matched_route.value.desc or ctx.matched_route.value.id
     end
 
     local balancer_ip = ctx.balancer_ip
-    metrics.status:inc(1, vars.status, service_name, balancer_ip)
+    core.table.set(tmp_tab, ctx.var.status, service_name, balancer_ip)
+    metrics.status:inc(1, tmp_tab)
 
     local latency = (ngx.now() - ngx.req.start_time()) * 1000
-    metrics.latency:observe(latency, "request", service_name, balancer_ip)
+    tmp_tab[1] = "request"
+    metrics.latency:observe(latency, tmp_tab)
 
-    metrics.bandwidth:inc(vars.request_length, "ingress", service_name,
-                          balancer_ip)
+    tmp_tab[1] = "ingress"
+    metrics.bandwidth:inc(ctx.var.request_length, tmp_tab)
 
-    metrics.bandwidth:inc(vars.bytes_sent, "egress", service_name,
-                          balancer_ip)
+    tmp_tab[1] = "egress"
+    metrics.bandwidth:inc(ctx.var.bytes_sent, tmp_tab)
+
 end
 
 
@@ -104,13 +105,15 @@ local function nginx_status()
         return
     end
 
+    core.table.clear(tmp_tab)
     for _, name in ipairs(ngx_statu_items) do
         local val = iterator()
         if not val then
             break
         end
 
-        metrics.connections:set(val[0], name)
+        tmp_tab[1] = name
+        metrics.connections:set(val[0], tmp_tab)
     end
 end
 
@@ -138,6 +141,7 @@ function _M.collect()
     end
 
     core.response.set_header("content_type", "text/plain")
+
     return 200, core.table.concat(prometheus:metric_data())
 end
 

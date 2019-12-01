@@ -38,7 +38,7 @@ before_install() {
 do_install() {
     export_or_prefix
 
-    make deps
+    make dev
 
     git clone https://github.com/iresty/test-nginx.git test-nginx
     git clone https://github.com/iresty/grpc_server_example.git grpc_server_example
@@ -59,6 +59,8 @@ script() {
 
     etcd --enable-v2=true &
     sleep 1
+
+    luarocks install luacheck
 
     sudo cpanm Test::Nginx
 

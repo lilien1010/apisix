@@ -17,7 +17,7 @@
 #
 -->
 
-[Chinese](stand-alone-cn.md)
+[中文](stand-alone-cn.md)
 
 ## Stand-alone mode
 

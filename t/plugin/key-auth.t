@@ -172,34 +172,11 @@ GET /hello
 
 
 === TEST 7: valid consumer
---- config
-    location /add_more_consumer {
-        content_by_lua_block {
-            local t = require("lib.test_admin").test
-            local username = ""
-            local key = ""
-            local code, body
-            for i = 1, 20 do
-                username = "user_" .. tostring(i)
-                key = "auth-" .. tostring(i)
-                code, body = t('/apisix/admin/consumers',
-                    ngx.HTTP_PUT,
-                    string.format('{"username":"%s","plugins":{"key-auth":{"key":"%s"}}}', username, key),
-                    string.format('{"node":{"value":{"username":"%s","plugins":{"key-auth":{"key":"%s"}}}},"action":"set"}', username, key)
-                    )
-            end
-
-            ngx.status = code
-            ngx.say(body)
-        }
-    }
 --- request
-GET /add_more_consumer
---- pipelined_requests eval
-["GET /add_more_consumer", "GET /hello"]
+GET /hello
 --- more_headers
-apikey: auth-13
---- response_body eval
-["passed\n", "hello world\n"]
+apikey: auth-one
+--- response_body
+hello world
 --- no_error_log
 [error]

@@ -17,7 +17,7 @@
 #
 -->
 
-[Chinese](plugins-cn.md)
+[中文](plugins-cn.md)
 
 ## Hot reload
 APISIX plug-ins are hot-loaded. No matter you add, delete or modify plug-ins, you don't need to restart the service.

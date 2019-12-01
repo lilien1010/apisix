@@ -17,7 +17,7 @@
 #
 -->
 
-[Chinese](benchmark-cn.md)
+[中文](benchmark-cn.md)
 ### Benchmark Environments
 n1-highcpu-8 (8 vCPUs, 7.2 GB memory) on Google Cloud
 

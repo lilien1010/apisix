@@ -17,7 +17,7 @@
 #
 -->
 
-[Chinese](ip-restriction-cn.md)
+[中文](ip-restriction-cn.md)
 
 # Summary
 - [**Name**](#name)
@@ -35,17 +35,19 @@ in CIDR notation like 10.10.10.0/24 can be used(will support IPv6 soon).
 
 ## Attributes
 
-|Name     |Requirement  |Description|
+|name     |option  |description|
 |---------|--------|-----------|
-|whitelist|optional  |List of IPs or CIDR ranges to whitelist|
-|blacklist|optional  |List of IPs or CIDR ranges to blacklist|
+|whitelist|option  |List of IPs or CIDR ranges to whitelist|
+|blacklist|option  |List of IPs or CIDR ranges to blacklist|
 
 One of `whitelist` or `blacklist` must be specified, and they can not work
 together.
 
 ## How To Enable
 
-Creates a route or service object, and enable plugin `ip-restriction`.
+Two steps are required:
+
+1. creates a route or service object, and enable plugin `ip-restriction`.
 
 ```shell
 curl http://127.0.0.1:9080/apisix/admin/routes/1 -X PUT -d '

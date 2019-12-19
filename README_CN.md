@@ -121,7 +121,7 @@ git clone https://github.com/apache/incubator-apisix-dashboard.git
 ```
 
 - 安装依赖和编译
-```
+```shell
 yarn install
 yarn run build:prod
 ```

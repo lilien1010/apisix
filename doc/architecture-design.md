@@ -17,6 +17,8 @@
 #
 -->
 
+[Chinese](architecture-design-cn.md)
+
 ## Table of Contents
 - [**APISIX**](#apisix)
 - [**APISIX Config**](#apisix-config)
@@ -187,7 +189,7 @@ The configuration of the plugin can be directly bound to the specified Route, or
 
 A plugin will only be executed once in a single request, even if it is bound to multiple different objects (such as Route or Service).
 
-The order in which plugins are run is determined by the priority of the plugin itself, for example: [example-plugin](../doc/plugins/example-plugin.lua#L16)。
+The order in which plugins are run is determined by the priority of the plugin itself, for example: [example-plugin](../lua/apisix/plugins/example-plugin.lua#L37).
 
 The plugin configuration is submitted as part of Route or Service and placed under `plugins`. It internally uses the plugin name as the hash's key to hold configuration items for different plugins.
 
@@ -208,7 +210,7 @@ The plugin configuration is submitted as part of Route or Service and placed und
 
 Not all plugins have specific configuration items. For example, there is no specific configuration item under `prometheus`. In this case, an empty object identifier can be used.
 
-[APISIX supported plugin list](plugins-cn.md)
+[APISIX supported plugin list](README.md#plugins)
 
 [Back to top](#Table-of-contents)
 
@@ -232,7 +234,7 @@ In addition to the basic complex equalization algorithm selection, APISIX's Upst
 |nodes           |required|Hash table, the key of the internal element is the upstream machine address list, the format is `Address + Port`, where the address part can be IP or domain name, such as `192.168.1.100:80`, `foo.com:80`, etc. Value is the weight of the node. In particular, when the weight value is `0`, it has a special meaning, which usually means that the upstream node is invalid and never wants to be selected.|
 |key             |required|This option is only valid if the type is `chash`. Find the corresponding node `id` according to `key`, the same `key` in the same object, always return the same id. For now, it support nginx built-in variables like `uri, server_name, server_addr, request_uri, remote_port, remote_addr, query_string, host, hostname, arg_***`, `arg_***` is arguments in the request line, [Nginx variables list](http://nginx.org/en/docs/varindex.html)|
 |checks          |optional|Configure the parameters of the health check. For details, refer to [health-check](health-check.md).|
-|retries         |optional|Pass the request to the next upstream using the underlying Nginx retry mechanism, the retry mechanism is not enabled by default.|
+|retries         |optional|Pass the request to the next upstream using the underlying Nginx retry mechanism, the retry mechanism is enabled by default and set the number of retries according to the number of backend nodes. If `retries` option is explicitly set, it will override the default value.|
 
 Create an upstream object use case:
 
@@ -370,7 +372,7 @@ In APISIX, the process of identifying a Consumer is as follows:
 
 <img src="./images/consumer-internal.png" width="50%" height="50%">
 
-1. Authorization certification: e.g [key-auth](./plugins/key-auth.md), [JWT](./plugins/jwt-auth-cn.md), etc.
+1. Authorization certification: e.g [key-auth](./plugins/key-auth.md), [JWT](./plugins/jwt-auth.md), etc.
 2. Get consumer_id: By authorization, you can naturally get the corresponding Consumer `id`, which is the unique identifier of the Consumer object.
 3. Get the Plugin or Upstream information bound to the Consumer: Complete the different configurations for different Consumers.
 

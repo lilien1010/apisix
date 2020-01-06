@@ -447,7 +447,7 @@ GET /t
 GET /t
 --- error_code: 400
 --- response_body
-{"error_msg":"invalid configuration: property \"service_id\" validation failed: object matches none of the alternatives"}
+{"error_msg":"invalid configuration: property \"service_id\" validation failed: object matches none of the requireds"}
 --- no_error_log
 [error]
 
@@ -555,7 +555,7 @@ passed
 GET /t
 --- error_code: 400
 --- response_body
-{"error_msg":"invalid configuration: property \"id\" validation failed: object matches none of the alternatives"}
+{"error_msg":"invalid configuration: property \"id\" validation failed: object matches none of the requireds"}
 --- no_error_log
 [error]
 
@@ -582,7 +582,7 @@ GET /t
 GET /t
 --- error_code: 400
 --- response_body
-{"error_msg":"invalid configuration: property \"upstream_id\" validation failed: object matches none of the alternatives"}
+{"error_msg":"invalid configuration: property \"upstream_id\" validation failed: object matches none of the requireds"}
 --- no_error_log
 [error]
 
@@ -949,7 +949,7 @@ passed
 GET /t
 --- error_code: 400
 --- response_body
-{"error_msg":"invalid configuration: property \"remote_addr\" validation failed: object matches none of the alternatives"}
+{"error_msg":"invalid configuration: property \"remote_addr\" validation failed: object matches none of the requireds"}
 --- no_error_log
 [error]
 
@@ -1349,6 +1349,235 @@ GET /t
                         "type": "roundrobin"
                     }
                 }]=]
+                )
+
+            ngx.status = code
+            ngx.say(body)
+        }
+    }
+--- request
+GET /t
+--- response_body
+passed
+--- no_error_log
+[error]
+
+
+
+=== TEST 38: set route with ttl
+--- config
+location /t {
+    content_by_lua_block {
+        local t = require("lib.test_admin").test
+        -- set
+        local code, body, res = t('/apisix/admin/routes/1?ttl=1',
+            ngx.HTTP_PUT,
+            [[{
+                "upstream": {
+                    "nodes": {
+                        "127.0.0.1:8080": 1
+                    },
+                    "type": "roundrobin"
+                },
+                "uri": "/index.html"
+            }]]
+            )
+
+        if code >= 300 then ngx.print("code: ", code, " ") end
+        ngx.say(body)
+
+        -- get
+        code, body = t('/apisix/admin/routes/1?ttl=1',
+            ngx.HTTP_GET,
+            nil,
+            [[{
+                "node": {
+                    "value": {
+                        "uri": "/index.html"
+                    },
+                    "key": "/apisix/routes/1"
+                }
+            }]]
+        )
+
+        if code >= 300 then ngx.print("code: ", code, " ") end
+        ngx.say(body)
+
+        ngx.sleep(2)
+
+        -- get again
+        code, body, res = t('/apisix/admin/routes/1', ngx.HTTP_GET)
+
+        if code >= 300 then ngx.print("code: ", code, " ") end
+        ngx.print(body)
+    }
+}
+--- request
+GET /t
+--- response_body_like eval
+qr$passed
+passed
+code: 404 {"cause":"\\/apisix\\/routes\\/1","index":\d+,"errorCode":100,"message":"Key not found"}$
+--- no_error_log
+[error]
+--- timeout: 5
+
+
+
+=== TEST 39: post route with ttl
+--- config
+location /t {
+    content_by_lua_block {
+        local t = require("lib.test_admin").test
+        local code, body, res = t('/apisix/admin/routes?ttl=1',
+            ngx.HTTP_POST,
+            [[{
+                "methods": ["GET"],
+                "upstream": {
+                    "nodes": {
+                        "127.0.0.1:8080": 1
+                    },
+                    "type": "roundrobin"
+                },
+                "uri": "/index.html"
+            }]],
+            [[{"action": "create"}]]
+            )
+
+        if code >= 300 then
+            ngx.status = code
+            ngx.say(body)
+            return
+        end
+
+        ngx.say("[push] succ: ", body)
+        ngx.sleep(2)
+
+        local id = string.sub(res.node.key, #"/apisix/routes/" + 1)
+        code, body = t('/apisix/admin/routes/' .. id, ngx.HTTP_GET)
+
+        if code >= 300 then ngx.print("code: ", code, " ") end
+        ngx.print(body)
+    }
+}
+--- request
+GET /t
+--- response_body_like eval
+qr$succ: passed
+code: 404 {"cause":"\\/apisix\\/routes\\/\d+","index":\d+,"errorCode":100,"message":"Key not found"}$
+--- no_error_log
+[error]
+--- timeout: 5
+
+
+
+=== TEST 40: invalid argument: ttl
+--- config
+location /t {
+    content_by_lua_block {
+        local t = require("lib.test_admin").test
+        local code, body, res = t('/apisix/admin/routes?ttl=xxx',
+            ngx.HTTP_PUT,
+            [[{
+                "upstream": {
+                    "nodes": {
+                        "127.0.0.1:8080": 1
+                    },
+                    "type": "roundrobin"
+                },
+                "uri": "/index.html"
+            }]]
+            )
+
+        if code >= 300 then
+            ngx.status = code
+            ngx.print(body)
+            return
+        end
+
+        ngx.say("[push] succ: ", body)
+    }
+}
+--- request
+GET /t
+--- error_code: 400
+--- response_body
+{"error_msg":"invalid argument ttl: should be a number"}
+--- no_error_log
+[error]
+
+
+
+=== TEST 41: set route(id: 1, check priority)
+--- config
+    location /t {
+        content_by_lua_block {
+            local t = require("lib.test_admin").test
+            local code, body = t('/apisix/admin/routes/1',
+                ngx.HTTP_PUT,
+                [[{
+                    "methods": ["GET"],
+                    "upstream": {
+                        "nodes": {
+                            "127.0.0.1:8080": 1
+                        },
+                        "type": "roundrobin"
+                    },
+                    "desc": "new route",
+                    "uri": "/index.html"
+                }]],
+                [[{
+                    "node": {
+                        "value": {
+                            "priority": 0
+                        },
+                        "key": "/apisix/routes/1"
+                    },
+                    "action": "set"
+                }]]
+                )
+
+            ngx.status = code
+            ngx.say(body)
+        }
+    }
+--- request
+GET /t
+--- response_body
+passed
+--- no_error_log
+[error]
+
+
+
+=== TEST 42: set route(id: 1 + priority: 0)
+--- config
+    location /t {
+        content_by_lua_block {
+            local t = require("lib.test_admin").test
+            local code, body = t('/apisix/admin/routes/1',
+                ngx.HTTP_PUT,
+                [[{
+                    "methods": ["GET"],
+                    "upstream": {
+                        "nodes": {
+                            "127.0.0.1:8080": 1
+                        },
+                        "type": "roundrobin"
+                    },
+                    "desc": "new route",
+                    "uri": "/index.html",
+                    "priority": 1
+                }]],
+                [[{
+                    "node": {
+                        "value": {
+                            "priority": 1
+                        },
+                        "key": "/apisix/routes/1"
+                    },
+                    "action": "set"
+                }]]
                 )
 
             ngx.status = code

@@ -24,8 +24,8 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/apache/incubator-apisix/blob/master/LICENSE)
 
 - **QQ 交流群**: 552030619
-- 邮件列表: 发邮件到 dev-subscribe@apisix.apache.org, 然后跟着回复邮件操作即可
-- [![Gitter](https://badges.gitter.im/apisix/community.svg)](https://gitter.im/apisix/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+- 邮件列表: 发邮件到 dev-subscribe@apisix.apache.org, 然后跟着回复邮件操作即可。
+- ![Twitter Follow](https://img.shields.io/twitter/follow/ApacheAPISIX?style=social)
 
 APISIX 是一个云原生、高性能、可扩展的微服务 API 网关。
 
@@ -35,7 +35,7 @@ APISIX 是一个云原生、高性能、可扩展的微服务 API 网关。
 
 如果你正在构建网站、移动设备或 IoT（物联网）的应用，那么你可能需要使用 API 网关来处理接口流量。
 
-APISIX 是基于云原生的微服务 API 网关，可以处理传统的南北向流量，也可以处理服务间的东西向流量。
+APISIX 是基于云原生的微服务 API 网关，可以处理传统的南北向流量，也可以处理服务间的东西向流量，也可以当做 k8s ingress controller 来使用。
 
 APISIX 通过插件机制，提供动态负载平衡、身份验证、限流限速等功能，并且支持你自己开发的插件。
 
@@ -113,27 +113,27 @@ sudo apisix start
 
 ## 控制台
 
-APISIX 内置了对 dashboard 的支持，步骤如下：
+APISIX 内置了对 Dashboard 的支持，使用步骤如下：
 
-- 下载 [dashboard](https://github.com/apache/incubator-apisix-dashboard) 的源码：
+- 下载 [Dashboard](https://github.com/apache/incubator-apisix-dashboard) 的源码：
 ```
 git clone https://github.com/apache/incubator-apisix-dashboard.git
 ```
 
-- 安装依赖和编译
+- 安装依赖并构建
 ```
-yarn install
+yarn
 yarn run build:prod
 ```
 
 - 与 APISIX 集成
-把编译后的文件，拷贝到 apisix/dashboard 目录下。
+把编译后的在 `/dist` 目录下的所有文件，拷贝到 `apisix/dashboard` 目录下。
 使用浏览器打开 `http://127.0.0.1:9080/apisix/dashboard/` 即可使用，
 不用填写用户名和密码，直接登录。
 
 Dashboard 默认允许任何 IP 访问。你可以自行修改 `conf/config.yaml` 中的 `allow_admin` 字段，指定允许访问 dashboard 的 IP 列表。
 
-我们部署了一个在线的 [dashboard](http://apisix.iresty.com) ，方便您了解 APISIX。
+我们部署了一个在线的 [Dashboard](http://apisix.iresty.com) ，方便你了解 APISIX。
 
 ## 性能测试
 

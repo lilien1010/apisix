@@ -83,6 +83,9 @@ local function push_host_router(route, host_routes, only_uri_routes)
 end
 
 
+local function empty_func() end
+
+
 local function create_radixtree_router(routes)
     local host_routes = {}
     local only_uri_routes = {}
@@ -102,8 +105,7 @@ local function create_radixtree_router(routes)
             filter_fun = function(vars, opts, ...)
                 return sub_router:dispatch(vars.uri, opts, ...)
             end,
-            handler = function (api_ctx)
-            end
+            handler = empty_func,
         })
     end
     if #host_router_routes > 0 then
@@ -137,7 +139,7 @@ function _M.match(api_ctx)
     end
 
     core.table.clear(match_opts)
-    match_opts.method = api_ctx.var.method
+    match_opts.method = api_ctx.var.request_method
     match_opts.remote_addr = api_ctx.var.remote_addr
     match_opts.vars = api_ctx.var
     match_opts.host = api_ctx.var.host
@@ -156,7 +158,7 @@ function _M.match(api_ctx)
     end
 
     core.log.info("not find any matched route")
-    return core.response.exit(404)
+    return true
 end
 
 

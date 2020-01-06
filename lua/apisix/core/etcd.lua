@@ -29,6 +29,8 @@ local function new()
 
     local etcd_conf = clone_tab(local_conf.etcd)
     local prefix = etcd_conf.prefix
+    etcd_conf.http_host = etcd_conf.host
+    etcd_conf.host = nil
     etcd_conf.prefix = nil
 
     local etcd_cli
@@ -52,23 +54,23 @@ function _M.get(key)
 end
 
 
-function _M.set(key, value)
+function _M.set(key, value, ttl)
     local etcd_cli, prefix, err = new()
     if not etcd_cli then
         return nil, err
     end
 
-    return etcd_cli:set(prefix .. key, value)
+    return etcd_cli:set(prefix .. key, value, ttl)
 end
 
 
-function _M.push(key, value)
+function _M.push(key, value, ttl)
     local etcd_cli, prefix, err = new()
     if not etcd_cli then
         return nil, err
     end
 
-    return etcd_cli:push(prefix .. key, value)
+    return etcd_cli:push(prefix .. key, value, ttl)
 end
 
 

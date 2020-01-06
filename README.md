@@ -25,8 +25,7 @@
 
 - **QQ group**: 552030619
 - Mail list: Mail to dev-subscribe@apisix.apache.org, follow the reply to subscribe the mail list.
-- [![Gitter](https://badges.gitter.im/apisix/community.svg)](https://gitter.im/apisix/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
-- [![Twitter](https://img.shields.io/twitter/follow/apisixfast.svg?style=social&label=Follow)](https://twitter.com/intent/follow?screen_name=apisixfast)
+- ![Twitter Follow](https://img.shields.io/twitter/follow/ApacheAPISIX?style=social)
 
 APISIX is a cloud-native microservices API gateway, delivering the ultimate performance, security, open source and scalable platform for all your APIs and microservices.
 
@@ -36,7 +35,7 @@ APISIX is based on Nginx and etcd. Compared with traditional API gateways, APISI
 
 If you are building a website, mobile device or IoT (Internet of Things) application, you may need to use an API gateway to handle interface traffic.
 
-APISIX is a cloud-based microservices API gateway that handles traditional north-south traffic and handles east-west traffic between services.
+APISIX is a cloud-based microservices API gateway that handles traditional north-south traffic and handles east-west traffic between services, and can also be used as a k8s ingress controller.
 
 APISIX provides dynamic load balancing, authentication, rate limiting, other plugins through plugin mechanisms, and supports plugins you develop yourself.
 
@@ -121,18 +120,18 @@ APISIX has built-in support for dashboards, as follows:
 git clone https://github.com/apache/incubator-apisix-dashboard.git
 ```
 
-- Install dependencies and compile
+- Install dependencies and build
 ```
-yarn install
-yarn run build: prod
+yarn
+yarn run build:prod
 ```
 
 - Integration with APISIX
-Copy the compiled files to the apisix / dashboard directory,
-open `http://127.0.0.1:9080/apisix/dashboard/` with a browser and try it.
+Copy the compiled files under `/dist` directory to the `apisix/dashboard` directory,
+open `http://127.0.0.1:9080/apisix/dashboard/` in the browser.
 Do not need to fill the user name and password, log in directly.
 
-Dashboard allow any remote IP by default, and you can modify `allow_admin` in `conf/config.yaml` by yourself, to list the list of IPs allowed to access.
+The dashboard allows any remote IP by default, and you can modify `allow_admin` in `conf/config.yaml` by yourself, to list the list of IPs allowed to access.
 
 We provide an online dashboard [demo version](http://apisix.iresty.com), make it easier for you to understand APISIX.
 

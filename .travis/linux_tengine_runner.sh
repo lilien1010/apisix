@@ -32,6 +32,16 @@ create_lua_deps() {
 
 before_install() {
     sudo cpanm --notest Test::Nginx >build.log 2>&1 || (cat build.log && exit 1)
+    docker pull redis:3.0-alpine
+    docker run --rm -itd -p 6379:6379 --name apisix_redis redis:3.0-alpine
+    # spin up kafka cluster for tests (1 zookeper and 1 kafka instance)
+    docker pull bitnami/zookeeper:3.6.0
+    docker pull bitnami/kafka:latest
+    docker network create kafka-net --driver bridge
+    docker run --name zookeeper-server -d -p 2181:2181 --network kafka-net -e ALLOW_ANONYMOUS_LOGIN=yes bitnami/zookeeper:3.6.0
+    docker run --name kafka-server1 -d --network kafka-net -e ALLOW_PLAINTEXT_LISTENER=yes -e KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper-server:2181 -e KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092 -p 9092:9092 -e KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true bitnami/kafka:latest
+    sleep 5
+    docker exec -it kafka-server1 /opt/bitnami/kafka/bin/kafka-topics.sh --create --zookeeper zookeeper-server:2181 --replication-factor 1 --partitions 1 --topic test2
 }
 
 tengine_install() {
@@ -75,7 +85,6 @@ tengine_install() {
     wget -P patches https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.17.4-cache_manager_exit.patch
     wget -P patches https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.17.4-daemon_destroy_pool.patch
     wget -P patches https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.17.4-delayed_posted_events.patch
-    wget -P patches https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.17.4-gcc-maybe-uninitialized-warning.patch
     wget -P patches https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.17.4-hash_overflow.patch
     wget -P patches https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.17.4-init_cycle_pool_release.patch
     wget -P patches https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.17.4-larger_max_error_str.patch
@@ -95,6 +104,7 @@ tengine_install() {
     wget -P patches https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.17.4-stream_ssl_preread_no_skip.patch
     wget -P patches https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.17.4-upstream_pipelining.patch
     wget -P patches https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.17.4-upstream_timeout_fields.patch
+    wget -P patches https://raw.githubusercontent.com/totemofwolf/openresty/master/patches/tengine-2.3.2-privileged_agent_process.patch
 
     cd bundle/tengine-2.3.2
     patch -p1 < ../../patches/nginx-1.17.4-always_enable_cc_feature_tests.patch
@@ -102,7 +112,6 @@ tengine_install() {
     patch -p1 < ../../patches/nginx-1.17.4-cache_manager_exit.patch
     patch -p1 < ../../patches/nginx-1.17.4-daemon_destroy_pool.patch
     patch -p1 < ../../patches/nginx-1.17.4-delayed_posted_events.patch
-    patch -p1 < ../../patches/nginx-1.17.4-gcc-maybe-uninitialized-warning.patch
     patch -p1 < ../../patches/nginx-1.17.4-hash_overflow.patch
     patch -p1 < ../../patches/nginx-1.17.4-init_cycle_pool_release.patch
     patch -p1 < ../../patches/nginx-1.17.4-larger_max_error_str.patch
@@ -122,6 +131,7 @@ tengine_install() {
     patch -p1 < ../../patches/nginx-1.17.4-stream_ssl_preread_no_skip.patch
     patch -p1 < ../../patches/nginx-1.17.4-upstream_pipelining.patch
     patch -p1 < ../../patches/nginx-1.17.4-upstream_timeout_fields.patch
+    patch -p1 < ../../patches/tengine-2.3.2-privileged_agent_process.patch
 
     cd -
     # patching end
@@ -217,22 +227,17 @@ do_install() {
     fi
 
     git clone https://github.com/iresty/test-nginx.git test-nginx
-    wget -P utils https://raw.githubusercontent.com/iresty/openresty-devel-utils/iresty/lj-releng
-	chmod a+x utils/lj-releng
+    make utils
 
     git clone https://github.com/apache/openwhisk-utilities.git .travis/openwhisk-utilities
     cp .travis/ASF* .travis/openwhisk-utilities/scancode/
 
     ls -l ./
+
     if [ ! -f "build-cache/grpc_server_example" ]; then
-        sudo apt-get install golang
-
-        git clone https://github.com/iresty/grpc_server_example.git grpc_server_example
-
-        cd grpc_server_example/
-        go build -o grpc_server_example main.go
-        mv grpc_server_example ../build-cache/
-        cd ..
+        wget https://github.com/iresty/grpc_server_example/releases/download/20200314/grpc_server_example-amd64.tar.gz
+        tar -xvf grpc_server_example-amd64.tar.gz
+        mv grpc_server_example build-cache/
     fi
 }
 

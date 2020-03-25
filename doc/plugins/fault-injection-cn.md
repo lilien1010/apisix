@@ -17,13 +17,13 @@
 #
 -->
 
-[English](fault-injection.md)
+# [English](fault-injection.md)
 
 # fault-injection
 
 故障注入插件，该插件可以和其他插件一起使用，并且会在其他插件前被执行，配置 `abort` 参数将直接返回给客户端指定的响应码并且终止其他插件的执行，配置 `delay` 参数将延迟某个请求，并且还会执行配置的其他插件。
 
-### 参数
+## 参数
 
 |名称    |必须|描述|
 |------- |-----|------|
@@ -33,14 +33,14 @@
 
 注：参数 abort 和 delay 至少要存在一个
 
-### 示例
+## 示例
 
-#### 启用插件
+### 启用插件
 
 示例1：为特定路由启用 `fault-injection` 插件，并指定 `abort` 参数：
 
 ```shell
-curl http://127.0.0.1:9080/apisix/admin/routes/1 -X PUT -d '
+curl http://127.0.0.1:9080/apisix/admin/routes/1 -H 'X-API-KEY: edd1c9f034335f136f87ad84b625c8f1' -X PUT -d '
 {
     "plugins": {
        "fault-injection": {
@@ -79,7 +79,7 @@ Fault Injection!
 示例2：为特定路由启用 `fault-injection` 插件，并指定 `delay` 参数：
 
 ```shell
-curl http://127.0.0.1:9080/apisix/admin/routes/1 -X PUT -d '
+curl http://127.0.0.1:9080/apisix/admin/routes/1 -H 'X-API-KEY: edd1c9f034335f136f87ad84b625c8f1' -X PUT -d '
 {
     "plugins": {
        "fault-injection": {
@@ -117,13 +117,12 @@ user    0m0.007s
 sys     0m0.010s
 ```
 
-
-#### 禁用插件
+### 禁用插件
 
 移除插件配置中相应的 JSON 配置可立即禁用该插件，无需重启服务：
 
 ```shell
-curl http://127.0.0.1:9080/apisix/admin/routes/1 -X PUT -d '
+curl http://127.0.0.1:9080/apisix/admin/routes/1 -H 'X-API-KEY: edd1c9f034335f136f87ad84b625c8f1' -X PUT -d '
 {
     "uri": "/hello",
     "plugins": {},

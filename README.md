@@ -55,21 +55,22 @@ A/B testing, canary release, blue-green deployment, limit rate, defense against 
 - **Multi protocols**
     - [TCP/UDP Proxy](doc/stream-proxy.md): Dynamic TCP/UDP proxy.
     - [Dynamic MQTT Proxy](doc/plugins/mqtt-proxy.md): Supports to load balance MQTT by `client_id`, both support MQTT [3.1.*](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/os/mqtt-v3.1.1-os.html), [5.0](https://docs.oasis-open.org/mqtt/mqtt/v5.0/mqtt-v5.0.html).
-    - [gRPC proxy](doc/grpc-proxy.md)：Proxying gRPC traffic.
-    - [gRPC transcoding](doc/plugins/grpc-transcoding.md)：Supports protocol transcoding so that clients can access your gRPC API by using HTTP/JSON.
+    - [gRPC proxy](doc/grpc-proxy.md): Proxying gRPC traffic.
+    - [gRPC transcoding](doc/plugins/grpc-transcoding.md): Supports protocol transcoding so that clients can access your gRPC API by using HTTP/JSON.
     - Proxy Websocket
-    - Proxy Dubbo: proxy Dubbo based on Tengine.
+    - Proxy Protocol
+    - Proxy Dubbo: Dubbo Proxy based on Tengine.
     - HTTP(S) Forward Proxy
     - [SSL](doc/https.md): Dynamically load an SSL certificate.
 
 - **Full dynamic**
     - [Hot Updates And Hot Plugins](doc/plugins.md): Continuously updates its configurations and plugins without restarts!
-    - [Proxy Rewrite](doc/plugins/proxy-rewrite.md): Support for rewriting the `host`, `uri`, `schema`, `enable_websocket`, `headers` information upstream of the request.
+    - [Proxy Rewrite](doc/plugins/proxy-rewrite.md): Support rewrite the `host`, `uri`, `schema`, `enable_websocket`, `headers` of the request before send to upstream.
     - [Response Rewrite](doc/plugins/response-rewrite.md): Set customized response status code, body and header to the client.
     - [Serverless](doc/plugins/serverless.md): Invoke functions in each phase in APISIX.
     - Dynamic Load Balancing: Round-robin load balancing with weight.
     - Hash-based Load Balancing: Load balance with consistent hashing sessions.
-    - [Health Checks](doc/health-check.md)：Enable health check on the upstream node, and will automatically filter unhealthy nodes during load balancing to ensure system stability.
+    - [Health Checks](doc/health-check.md): Enable health check on the upstream node, and will automatically filter unhealthy nodes during load balancing to ensure system stability.
     - Circuit-Breaker: Intelligent tracking of unhealthy upstream services.
 
 - **Fine-grained routing**
@@ -82,9 +83,9 @@ A/B testing, canary release, blue-green deployment, limit rate, defense against 
     - [Support priority](doc/router-radixtree.md#3-match-priority)
 
 - **Security**
-    - Authentications: [key-auth](doc/plugins/key-auth.md), [JWT](doc/plugins/jwt-auth.md), [basic-auth](doc/plugins/basic-auth.md)
+    - Authentications: [key-auth](doc/plugins/key-auth.md), [JWT](doc/plugins/jwt-auth.md), [basic-auth](doc/plugins/basic-auth.md), [wolf-rbac](doc/plugins/wolf-rbac.md)
     - [IP Whitelist/Blacklist](doc/plugins/ip-restriction.md)
-    - [IdP](doc/plugins/oauth.md): Support external authentication services, such as Auth0, okta, etc., users can use this to connect to Oauth2.0 and other authentication methods.
+    - [IdP](doc/plugins/oauth.md): Support external authentication services, such as Auth0, okta, etc., users can use this to connect to OAuth 2.0 and other authentication methods.
     - [Limit-req](doc/plugins/limit-req.md)
     - [Limit-count](doc/plugins/limit-count.md)
     - [Limit-concurrency](doc/plugins/limit-conn.md)
@@ -93,20 +94,22 @@ A/B testing, canary release, blue-green deployment, limit rate, defense against 
 - **OPS friendly**
     - OpenTracing: [support Apache Skywalking and Zipkin](doc/plugins/zipkin.md)
     - Monitoring And Metrics: [Prometheus](doc/plugins/prometheus.md)
-    - Clustering: APISIX nodes are stateless, creates clustering of the configuration center, please refer to [etcd Clustering Guide](https://github.com/etcd-io/etcd/blob/master/Documentation/v2/clustering.md).
+    - Clustering: APISIX nodes are stateless, creates clustering of the configuration center, please refer to [etcd Clustering Guide](https://github.com/etcd-io/etcd/blob/master/Documentation/op-guide/clustering.md).
+    - High availability: support to configure multiple etcd addresses in the same cluster.
     - Dashboard: Built-in dashboard to control APISIX.
     - Version Control: Supports rollbacks of operations.
     - CLI: start\stop\reload APISIX through the command line.
     - [Stand-alone mode](doc/stand-alone.md): Supports to load route rules from local yaml file, it is more friendly such as under the kubernetes(k8s).
-    - Global Rule: Allows to run any plugin for all request, eg: limit rate, IP filter etc.
+    - [Global Rule](doc/architecture-design.md#Global-Rule): Allows to run any plugin for all request, eg: limit rate, IP filter etc.
     - High performance: The single-core QPS reaches 18k with an average delay of less than 0.2 milliseconds.
-    - [REST admin API](doc/admin-api.md)
     - [Fault Injection](doc/plugins/fault-injection.md)
+    - [REST Admin API](doc/admin-api.md)
+    - [Python SDK](https://github.com/api7/apache-apisix-python-sdk)
 
 - **Highly scalable**
-    - [Custom plugins]((doc/plugin-develop.md)): Allows hooking of common phases, such as `rewrite`, `access`, `header filer`, `body filter` and `log`, also allows to hook the `balancer` stage.
+    - [Custom plugins](doc/plugin-develop.md): Allows hooking of common phases, such as `rewrite`, `access`, `header filer`, `body filter` and `log`, also allows to hook the `balancer` stage.
     - Custom load balancing algorithms: You can use custom load balancing algorithms during the `balancer` phase.
-    -Custom routing: Support users to implement routing algorithms themselves.
+    - Custom routing: Support users to implement routing algorithms themselves.
 
 ## Installation
 
@@ -130,28 +133,31 @@ Steps to install APISIX:
 sudo apisix start
 ```
 
-2. try limit count plugin
+2. Try the getting started guide
 
-Limit count plugin is a good start to try APISIX,
-you can follow the [documentation of limit count](doc/plugins/limit-count.md).
+The getting-started guide is a good way to learn the basics of APISIX. Follow the [getting started guide](doc/getting-started.md).
 
 Then you can try more [plugins](doc/README.md#plugins).
 
 ## Dashboard
-APISIX has built-in support for dashboards, as follows:
+APISIX has built-in support for Dashboard, as follows:
 
-- Download the source code of [dashboard](https://github.com/apache/incubator-apisix-dashboard):
+1. Please make sure your machine has Node 8.12.0 or higher, or there will occur build issues.
+
+2. Download the source codes of [Dashboard](https://github.com/apache/incubator-apisix-dashboard):
 ```
 git clone https://github.com/apache/incubator-apisix-dashboard.git
 ```
-- install yarn: refer to [documentation](https://yarnpkg.com/en/docs/install)
-- Install dependencies and build
+
+3. Install [yarn](https://yarnpkg.com/en/docs/install)
+
+4. Install dependencies then run build command:
 ```
-yarn
-yarn run build:prod
+git checkout <v1.0> #The tag version same to apisix.
+yarn && yarn build:prod
 ```
 
-- Integration with APISIX
+5. Integration with APISIX
 Copy the compiled files under `/dist` directory to the `apisix/dashboard` directory,
 open `http://127.0.0.1:9080/apisix/dashboard/` in the browser.
 Do not need to fill the user name and password, log in directly.
@@ -208,13 +214,8 @@ Using AWS's 8 core server, APISIX's QPS reach to 140,000 with a latency of only 
 | Support any Nginx variable as routing condition  | Yes   | No   |
 
 ## Videos And Articles
-- 2019.12.14 [From 0 to 1: APISIX's Apache travel(Chinese)](https://zhuanlan.zhihu.com/p/99620158)
-- 2019.12.14 [Next-generation microservice architecture based on Apache APISIX(Chinese)](https://www.upyun.com/opentalk/445.html)
-- 2019.10.30 [Introduction to Apache APISIX Microservice Gateway Extreme Performance Architecture(Chinese)](https://www.upyun.com/opentalk/440.html)
-- 2019.9.27 [Want to run APISIX on an ARM64 platform? Just three steps(Chinese)](https://zhuanlan.zhihu.com/p/84467919)
-- 2019.8.31 [APISIX technology selection, testing and continuous integration(Chinese)](https://www.upyun.com/opentalk/433.html)
-- 2019.8.31 [APISIX high performance practice 2(Chinese)](https://www.upyun.com/opentalk/437.html)
-- 2019.7.6 [APISIX high performance practice(Chinese)](https://www.upyun.com/opentalk/429.html)
+- [APISIX technology selection, testing and continuous integration](https://medium.com/@ming_wen/apache-apisixs-technology-selection-testing-and-continuous-integration-313221b02542)
+- [Analysis of Excellent Performance of Apache APISIX Microservices Gateway](https://medium.com/@ming_wen/analysis-of-excellent-performance-of-apache-apisix-microservices-gateway-fc77db4090b5)
 
 ## User Stories
 - [ke.com: How to Build a Gateway Based on Apache APISIX(Chinese)](https://mp.weixin.qq.com/s/yZl9MWPyF1-gOyCp8plflA)
@@ -244,4 +245,4 @@ See [CONTRIBUTING](Contributing.md) for details on submitting patches and the co
 
 ## Acknowledgments
 
-inspired by Kong and Orange.
+Inspired by Kong and Orange.

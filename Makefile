@@ -34,7 +34,7 @@ ifeq ("$(wildcard /usr/local/openresty-debug/bin/openresty)", "")
 endif
 endif
 
-LUTJIT_DIR ?= $(shell ${OR_EXEC} -V 2>&1 | grep prefix | grep -Eo 'prefix=(.*?)/nginx' | grep -Eo '/.*/')luajit
+LUAJIT_DIR ?= $(shell ${OR_EXEC} -V 2>&1 | grep prefix | grep -Eo 'prefix=(.*)/nginx\s+--' | grep -Eo '/.*/')luajit
 
 ### help:             Show Makefile rules.
 .PHONY: help
@@ -47,12 +47,10 @@ help: default
 ### deps:             Installation dependencies
 .PHONY: deps
 deps: default
-ifeq ($(UNAME),Darwin)
-	luarocks install --lua-dir=$(LUTJIT_DIR) rockspec/apisix-master-0.rockspec --tree=deps --only-deps --local
-else ifneq ($(LUAROCKS_VER),'luarocks 3.')
-	luarocks install rockspec/apisix-master-0.rockspec --tree=deps --only-deps --local
+ifeq ($(LUAROCKS_VER),luarocks 3.)
+	luarocks install --lua-dir=$(LUAJIT_DIR) rockspec/apisix-master-0.rockspec --tree=deps --only-deps --local
 else
-	luarocks install --lua-dir=/usr/local/openresty/luajit rockspec/apisix-master-0.rockspec --tree=deps --only-deps --local
+	luarocks install rockspec/apisix-master-0.rockspec --tree=deps --only-deps --local
 endif
 
 
@@ -60,7 +58,7 @@ endif
 .PHONY: utils
 utils:
 ifeq ("$(wildcard utils/lj-releng)", "")
-	wget -O utils/lj-releng https://raw.githubusercontent.com/iresty/openresty-devel-utils/iresty/lj-releng
+	wget -O utils/lj-releng https://raw.githubusercontent.com/iresty/openresty-devel-utils/master/lj-releng
 	chmod a+x utils/lj-releng
 endif
 
@@ -68,17 +66,7 @@ endif
 ### lint:             Lint Lua source code
 .PHONY: lint
 lint: utils
-	luacheck -q lua
-	./utils/lj-releng lua/*.lua \
-		lua/apisix/*.lua \
-		lua/apisix/admin/*.lua \
-		lua/apisix/core/*.lua \
-		lua/apisix/http/*.lua \
-		lua/apisix/http/router/*.lua \
-		lua/apisix/plugins/*.lua \
-		lua/apisix/plugins/grpc-transcode/*.lua \
-		lua/apisix/plugins/limit-count/*.lua > \
-		/tmp/check.log 2>&1 || (cat /tmp/check.log && exit 1)
+	./utils/check-lua-code-style.sh
 
 
 ### init:             Initialize the runtime environment
@@ -100,6 +88,12 @@ run: default
 .PHONY: stop
 stop: default
 	$(OR_EXEC) -p $$PWD/ -c $$PWD/conf/nginx.conf -s stop
+
+
+### verify:           Verify the configuration of apisix server
+.PHONY: verify
+verify: default
+	$(OR_EXEC) -p $$PWD/ -c $$PWD/conf/nginx.conf -t
 
 
 ### clean:            Remove generated files
@@ -162,18 +156,16 @@ install:
 	$(INSTALL) -d $(INST_LUADIR)/apisix/lua/apisix/stream/router
 	$(INSTALL) lua/apisix/stream/router/*.lua $(INST_LUADIR)/apisix/lua/apisix/stream/router/
 
+	$(INSTALL) -d $(INST_LUADIR)/apisix/lua/apisix/utils
+	$(INSTALL) lua/apisix/utils/*.lua $(INST_LUADIR)/apisix/lua/apisix/utils/
+
 	$(INSTALL) README.md $(INST_CONFDIR)/README.md
 	$(INSTALL) bin/apisix $(INST_BINDIR)/apisix
 
 
 ### test:             Run the test case
 test:
-ifeq ($(UNAME),Darwin)
 	prove -I../test-nginx/lib -I./ -r -s t/
-else
-	prove -I../test-nginx/lib -r -s t/
-endif
-
 
 ### license-check:    Check Lua source code for Apache License
 .PHONY: license-check

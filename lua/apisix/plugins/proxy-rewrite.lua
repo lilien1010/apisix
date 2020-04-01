@@ -31,7 +31,7 @@ local schema = {
             type        = "string",
             minLength   = 1,
             maxLength   = 4096,
-            pattern     = "^/.*",
+            pattern     = [[^\/.*]],
         },
         regex_uri = {
             description = "new uri that substitute from client uri " ..
@@ -53,11 +53,6 @@ local schema = {
             description = "new scheme for upstream",
             type    = "string",
             enum    = {"http", "https"}
-        },
-        enable_websocket = {
-            description = "enable websocket for request",
-            type        = "boolean",
-            default     = false
         },
         headers = {
             description = "new headers for request",
@@ -153,11 +148,6 @@ function _M.rewrite(conf, ctx)
         ctx.var.upstream_uri = upstream_uri .. "?" .. (ctx.var.args or "")
     else
         ctx.var.upstream_uri = upstream_uri
-    end
-
-    if conf.enable_websocket then
-        ctx.var.upstream_upgrade    = ctx.var.http_upgrade
-        ctx.var.upstream_connection = ctx.var.http_connection
     end
 
     if conf.headers_arr then

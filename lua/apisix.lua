@@ -32,16 +32,20 @@ local pairs         = pairs
 local tostring      = tostring
 local load_balancer
 
+local dns_resolver
+local parsed_domain
 
-local parsed_domain = core.lrucache.new({
-    ttl = 300, count = 512
-})
+
+local function parse_args(args)
+    dns_resolver = args and args["dns_resolver"]
+    core.log.info("dns resolver", core.json.delay_encode(dns_resolver, true))
+end
 
 
 local _M = {version = 0.3}
 
 
-function _M.http_init()
+function _M.http_init(args)
     require("resty.core")
 
     if require("ffi").os == "Linux" then
@@ -59,7 +63,7 @@ function _M.http_init()
         seed = ngx.now() * 1000 + ngx.worker.pid()
     end
     math.randomseed(seed)
-
+    parse_args(args)
     core.id.init()
 end
 
@@ -85,6 +89,14 @@ function _M.http_init_worker()
     end
 
     require("apisix.debug").init_worker()
+
+    local local_conf = core.config.local_conf()
+    local dns_resolver_valid = local_conf and local_conf.apisix and
+                        local_conf.apisix.dns_resolver_valid
+
+    parsed_domain = core.lrucache.new({
+        ttl = dns_resolver_valid, count = 512, invalid_stale = true,
+    })
 end
 
 
@@ -165,23 +177,25 @@ end
 
 
 local function parse_domain_in_up(up, ver)
-    local local_conf = core.config.local_conf()
-    local dns_resolver = local_conf and local_conf.apisix and
-                         local_conf.apisix.dns_resolver
     local new_nodes = core.table.new(0, 8)
-
     for addr, weight in pairs(up.value.nodes) do
         local host, port = core.utils.parse_addr(addr)
         if not ipmatcher.parse_ipv4(host) and
            not ipmatcher.parse_ipv6(host) then
-            local ip_info = core.utils.dns_parse(dns_resolver, host)
-            core.log.info("parse addr: ", core.json.delay_encode(ip_info),
-                          " resolver: ", core.json.delay_encode(dns_resolver),
-                          " addr: ", addr)
-            if ip_info and ip_info.address then
+            local ip_info, err = core.utils.dns_parse(dns_resolver, host)
+            if not ip_info then
+                return nil, err
+            end
+
+            core.log.info("parse addr: ", core.json.delay_encode(ip_info))
+            core.log.info("resolver: ", core.json.delay_encode(dns_resolver))
+            core.log.info("host: ", host)
+            if ip_info.address then
                 new_nodes[ip_info.address .. ":" .. port] = weight
                 core.log.info("dns resolver domain: ", host, " to ",
                               ip_info.address)
+            else
+                return nil, "failed to parse domain in route"
             end
         else
             new_nodes[addr] = weight
@@ -197,24 +211,27 @@ end
 
 
 local function parse_domain_in_route(route, ver)
-    local local_conf = core.config.local_conf()
-    local dns_resolver = local_conf and local_conf.apisix and
-                         local_conf.apisix.dns_resolver
     local new_nodes = core.table.new(0, 8)
-
     for addr, weight in pairs(route.value.upstream.nodes) do
         local host, port = core.utils.parse_addr(addr)
         if not ipmatcher.parse_ipv4(host) and
            not ipmatcher.parse_ipv6(host) then
-            local ip_info = core.utils.dns_parse(dns_resolver, host)
-            core.log.info("parse addr: ", core.json.delay_encode(ip_info),
-                          " resolver: ", core.json.delay_encode(dns_resolver),
-                          " addr: ", addr)
+            local ip_info, err = core.utils.dns_parse(dns_resolver, host)
+            if not ip_info then
+                return nil, err
+            end
+
+            core.log.info("parse addr: ", core.json.delay_encode(ip_info))
+            core.log.info("resolver: ", core.json.delay_encode(dns_resolver))
+            core.log.info("host: ", host)
             if ip_info and ip_info.address then
                 new_nodes[ip_info.address .. ":" .. port] = weight
                 core.log.info("dns resolver domain: ", host, " to ",
                               ip_info.address)
+            else
+                return nil, "failed to parse domain in route"
             end
+
         else
             new_nodes[addr] = weight
         end
@@ -268,7 +285,8 @@ function _M.http_access_phase()
 
     local route = api_ctx.matched_route
     if not route then
-        return core.response.exit(404, {error_msg = "failed to match any routes"})
+        return core.response.exit(404,
+                    {error_msg = "failed to match any routes"})
     end
 
     if route.value.service_protocol == "grpc" then
@@ -311,8 +329,12 @@ function _M.http_access_phase()
         if upstreams_etcd then
             local upstream = upstreams_etcd:get(tostring(up_id))
             if upstream.has_domain then
-                parsed_domain(upstream, api_ctx.conf_version,
-                              parse_domain_in_up, upstream)
+                local _, err = parsed_domain(upstream, api_ctx.conf_version,
+                                             parse_domain_in_up, upstream)
+                if err then
+                    core.log.error("failed to parse domain in upstream: ", err)
+                    return core.response.exit(500)
+                end
             end
 
             if upstream.value.enable_websocket then
@@ -423,19 +445,35 @@ end
 
 
 function _M.http_log_phase()
-    local api_ctx = run_plugin("log")
-    if api_ctx then
-        if api_ctx.uri_parse_param then
-            core.tablepool.release("uri_parse_param", api_ctx.uri_parse_param)
-        end
-
-        core.ctx.release_vars(api_ctx)
-        if api_ctx.plugins then
-            core.tablepool.release("plugins", api_ctx.plugins)
-        end
-
-        core.tablepool.release("api_ctx", api_ctx)
+    local api_ctx = ngx.ctx.api_ctx
+    if not api_ctx then
+        return
     end
+
+    if router.global_rules and router.global_rules.values
+       and #router.global_rules.values > 0
+    then
+        local plugins = core.tablepool.fetch("plugins", 32, 0)
+        for _, global_rule in ipairs(router.global_rules.values) do
+            core.table.clear(plugins)
+            plugins = plugin.filter(global_rule, plugins)
+            run_plugin("log", plugins, api_ctx)
+        end
+        core.tablepool.release("plugins", plugins)
+    end
+
+    run_plugin("log", nil, api_ctx)
+
+    if api_ctx.uri_parse_param then
+        core.tablepool.release("uri_parse_param", api_ctx.uri_parse_param)
+    end
+
+    core.ctx.release_vars(api_ctx)
+    if api_ctx.plugins then
+        core.tablepool.release("plugins", api_ctx.plugins)
+    end
+
+    core.tablepool.release("api_ctx", api_ctx)
 end
 
 
@@ -471,12 +509,13 @@ local function cors_admin()
     local method = get_method()
     if method == "OPTIONS" then
         core.response.set_header("Access-Control-Allow-Origin", "*",
-                                "Access-Control-Allow-Methods", "POST, GET, PUT, OPTIONS, DELETE, PATCH",
-                                "Access-Control-Max-Age", "3600",
-                                "Access-Control-Allow-Headers", "*",
-                                "Access-Control-Allow-Credentials", "true",
-                                "Content-Length", "0",
-                                "Content-Type", "text/plain")
+            "Access-Control-Allow-Methods",
+            "POST, GET, PUT, OPTIONS, DELETE, PATCH",
+            "Access-Control-Max-Age", "3600",
+            "Access-Control-Allow-Headers", "*",
+            "Access-Control-Allow-Credentials", "true",
+            "Content-Length", "0",
+            "Content-Type", "text/plain")
         ngx_exit(200)
     end
 
@@ -518,6 +557,14 @@ function _M.stream_init_worker()
     plugin.init_worker()
 
     load_balancer = require("apisix.balancer").run
+
+    local local_conf = core.config.local_conf()
+    local dns_resolver_valid = local_conf and local_conf.apisix and
+                        local_conf.apisix.dns_resolver_valid
+
+    parsed_domain = core.lrucache.new({
+        ttl = dns_resolver_valid, count = 512, invalid_stale = true,
+    })
 end
 
 

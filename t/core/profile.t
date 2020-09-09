@@ -29,8 +29,16 @@ run_tests;
 __DATA__
 
 === TEST 1: set env "APISIX_PROFILE"
+--- config
+    location /t {
+        content_by_lua_block {
+            local profile = require("apisix.core.profile")
+            profile.apisix_home = "./test/"
+            local local_conf_path = profile:yaml_path("config")
+            ngx.say(local_conf_path)
+        }
+    }
 --- request
 GET /t
---- must_die
---- error_log_like eval
-qr/failed to read config file:.*conf/config-default-dev.yaml/
+--- response_body
+./test/conf/config-dev.yaml

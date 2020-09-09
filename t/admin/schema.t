@@ -93,23 +93,9 @@ location /t {
                     sni = {
                         type = "string",
                         pattern = [[^\*?[0-9a-zA-Z-.]+$]],
-                    },
-                    snis = {
-                        type = "array",
-                        items = {
-                            type = "string",
-                            pattern = [[^\*?[0-9a-zA-Z-.]+$]],
-                        }
-                    },
-                    exptime = {
-                        type = "integer",
-                        minimum = 1588262400,  -- 2020/5/1 0:0:0
-                    },
+                    }
                 },
-                oneOf = {
-                    {required = {"sni", "key", "cert"}},
-                    {required = {"snis", "key", "cert"}}
-                },
+                required = {"sni", "key", "cert"},
                 additionalProperties = false,
             }
             )
@@ -131,7 +117,7 @@ passed
 --- request
 GET /apisix/admin/schema/plugins/limit-count
 --- response_body eval
-qr/"required":\["count","time_window","key"\]/
+qr/"required":\["count","time_window","key","rejected_code"]/
 --- no_error_log
 [error]
 
@@ -157,7 +143,7 @@ location /t {
             [[{
                 "properties": {
                     "phase": {
-                        "enum": ["rewrite", "access", "header_filter", "body_filter", "log", "balancer"],
+                        "enum": ["rewrite", "access", "header_filer", "body_filter", "log", "balancer"],
                         "type": "string"
                     },
                     "functions": {
@@ -197,7 +183,7 @@ location /t {
             [[{
                 "properties": {
                     "phase": {
-                        "enum": ["rewrite", "access", "header_filter", "body_filter", "log", "balancer"],
+                        "enum": ["rewrite", "access", "header_filer", "body_filter", "log", "balancer"],
                         "type": "string"
                     },
                     "functions": {

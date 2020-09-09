@@ -68,6 +68,7 @@ Here are the rules:
 |/blog/foo/gloo | `/blog/foo/*` |
 |/blog/bar | not match |
 
+
 ### How to filter route by Nginx builtin variable
 
 Please take a look at [radixtree-new](https://github.com/iresty/lua-resty-radixtree#new),

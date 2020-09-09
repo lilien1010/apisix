@@ -17,16 +17,14 @@
 #
 -->
 
-[Chinese](zh-cn/architecture-design.md)
+[Chinese](architecture-design-cn.md)
 
 ## Table of Contents
-
 - [**APISIX**](#apisix)
 - [**APISIX Config**](#apisix-config)
 - [**Route**](#route)
 - [**Service**](#service)
 - [**Plugin**](#plugin)
-- [**Script**](#script)
 - [**Upstream**](#upstream)
 - [**Router**](#router)
 - [**Consumer**](#consumer)
@@ -37,7 +35,7 @@
 
 ### Plugin Loading Process
 
-![flow-load-plugin](./images/flow-load-plugin.png)
+![](./images/flow-load-plugin.png)
 
 ### Plugin Hierarchy Structure
 
@@ -45,27 +43,25 @@
 
 ## APISIX Config
 
-For example, set the default listening port of APISIX to 8000, and keep other configurations as default. The configuration in `conf/config.yaml` should be like this:
+We can start using APISIX just by modifying `conf/config.yaml` file.
 
 ```yaml
 apisix:
-  node_listen: 8000             # APISIX listening port
-```
-
-Set the default listening port of APISIX to 8000, set the `etcd` address to `http://foo:2379`,
-and keep other configurations as default. The configuration in `conf/config.yaml` should be like this:
-
-```yaml
-apisix:
-  node_listen: 8000             # APISIX listening port
+  node_listen: 9080             # APISIX listening port
 
 etcd:
-  host: "http://foo:2379"       # etcd address
+  host: "http://127.0.0.1:2379" # etcd address
+  prefix: "apisix"              # apisix configurations prefix
+  timeout: 60
+
+plugins:                        # plugin name list
+  - example-plugin
+  - limit-req
+  - limit-count
+  - ...
 ```
 
-Other default configurations can be found in the `conf/config-default.yaml` file, which is bound to the APISIX source code. **Never** manually modify the `conf/config-default.yaml` file. If you need to customize any configuration, you should update the `conf/config.yaml` file.
-
-**Note** `APISIX` will generate `conf/nginx.conf` file automatically, so please *DO NOT EDIT* `conf/nginx.conf` file too.
+*Note* `apisix` will generate `conf/nginx.conf` file automatically, so please *DO NOT EDIT* that file.
 
 [Back to top](#Table-of-contents)
 
@@ -83,7 +79,7 @@ We configure all the parameters directly in the Route, it's easy to set up, and 
 
 The shortcomings mentioned above are independently abstracted in APISIX by the two concepts [Service](#service) and [Upstream](#upstream).
 
-The route example created below is to proxy the request with URL `/index.html` to the Upstream service with the address `39.97.63.215:80`:
+The route example created below is to proxy the request with uri `/index.html` to the Upstream service with the address `39.97.63.215:80`:
 
 ```shell
 $ curl http://127.0.0.1:9080/apisix/admin/routes/1 -H 'X-API-KEY: edd1c9f034335f136f87ad84b625c8f1' -X PUT -i -d '
@@ -109,7 +105,7 @@ Server: APISIX web server
 
 When we receive a successful response, it indicates that the route was successfully created.
 
-For specific options of Route, please refer to [Admin API](admin-api.md#route).
+For specific options of Route, please refer to [Admin API](admin-api-cn.md#route).
 
 [Back to top](#Table-of-contents)
 
@@ -194,7 +190,7 @@ The configuration of the plugin can be directly bound to the specified Route, or
 
 A plugin will only be executed once in a single request, even if it is bound to multiple different objects (such as Route or Service).
 
-The order in which plugins are run is determined by the priority of the plugin itself, for example: [example-plugin](../apisix/plugins/example-plugin.lua#L37).
+The order in which plugins are run is determined by the priority of the plugin itself, for example: [example-plugin](../lua/apisix/plugins/example-plugin.lua#L37).
 
 The plugin configuration is submitted as part of Route or Service and placed under `plugins`. It internally uses the plugin name as the hash's key to hold configuration items for different plugins.
 
@@ -219,25 +215,6 @@ Not all plugins have specific configuration items. For example, there is no spec
 
 [Back to top](#Table-of-contents)
 
-## Script
-
-`Script` represents a script that will be executed during the `HTTP` request/response life cycle.
-
-The `Script` configuration can be directly bound to the `Route`.
-
-`Script` and `Plugin` are mutually exclusive, and `Script` is executed first. This means that after configuring `Script`, the `Plugin` configured on `Route` will not be executed.
-
-In theory, you can write arbitrary Lua code in `Script`, or you can directly call existing plugins to reuse existing code.
-
-`Script` also has the concept of execution phase, supporting `access`, `header_filer`, `body_filter` and `log` phase. The system will automatically execute the code of the corresponding phase in the `Script` script in the corresponding phase.
-
-```json
-{
-    ...
-    "script": "local _M = {} \n function _M.access(api_ctx) \n ngx.log(ngx.INFO,\"hit access phase\") \n end \nreturn _M"
-}
-```
-
 ## Upstream
 
 Upstream is a virtual host abstraction that performs load balancing on a given set of service nodes according to configuration rules. Upstream address information can be directly configured to `Route` (or `Service`). When Upstream has duplicates, you need to use "reference" to avoid duplication.
@@ -248,16 +225,14 @@ As shown in the image above, by creating an Upstream object and referencing it b
 
 Upstream configuration can be directly bound to the specified `Route` or it can be bound to `Service`, but the configuration in `Route` has a higher priority. The priority behavior here is very similar to `Plugin`.
 
-### Configuration
+#### Configuration
 
 In addition to the basic complex equalization algorithm selection, APISIX's Upstream also supports logic for upstream passive health check and retry, see the table below.
 
 |Name    |Optional|Description|
 |-------         |-----|------|
 |type            |required|`roundrobin` supports the weight of the load, `chash` consistency hash, pick one of them.|
-|nodes           |required if `service_name` and `k8s_deployment_info` not configured|Hash table, the key of the internal element is the upstream machine address list, the format is `Address + Port`, where the address part can be IP or domain name, such as `192.168.1.100:80`, `foo.com:80`, etc. Value is the weight of the node. In particular, when the weight value is `0`, it has a special meaning, which usually means that the upstream node is invalid and never wants to be selected.|
-|service_name    |required if `nodes` and `k8s_deployment_info` not configured |The name of the upstream service and used with the registry, refer to [Integration service discovery registry](discovery.md).|
-|k8s_deployment_info |required if `nodes` and `service_name` not configured|fields: `namespace`、`deploy_name`、`service_name`、`port`、`backend_type`, `port` is number, `backend_type` is `pod` or `service`, others is string. |
+|nodes           |required|Hash table, the key of the internal element is the upstream machine address list, the format is `Address + Port`, where the address part can be IP or domain name, such as `192.168.1.100:80`, `foo.com:80`, etc. Value is the weight of the node. In particular, when the weight value is `0`, it has a special meaning, which usually means that the upstream node is invalid and never wants to be selected.|
 |hash_on         |optional|This option is only valid if the `type` is `chash`. Supported types `vars`(Nginx variables), `header`(custom header), `cookie`, `consumer`, the default value is `vars`.|
 |key             |required|This option is only valid if the `type` is `chash`. Find the corresponding node `id` according to `hash_on` and `key`. When `hash_on` is set as `vars`, `key` is the required parameter, for now, it support nginx built-in variables like `uri, server_name, server_addr, request_uri, remote_port, remote_addr, query_string, host, hostname, arg_***`, `arg_***` is arguments in the request line, [Nginx variables list](http://nginx.org/en/docs/varindex.html). When `hash_on` is set as `header`, `key` is the required parameter, and `header name` is customized. When `hash_on` is set to `cookie`, `key` is the required parameter, and `cookie name` is customized. When `hash_on` is set to `consumer`, `key` does not need to be set. In this case, the `key` adopted by the hash algorithm is the `consumer_id` authenticated. If the specified `hash_on` and `key` can not fetch values, it will be fetch `remote_addr` by default.|
 |checks          |optional|Configure the parameters of the health check. For details, refer to [health-check](health-check.md).|
@@ -265,8 +240,6 @@ In addition to the basic complex equalization algorithm selection, APISIX's Upst
 |enable_websocket|optional| enable `websocket`(boolean), default `false`.|
 |timeout|optional| Set the timeout for connection, sending and receiving messages. |
 |desc     |optional|Identifies route names, usage scenarios, and more.|
-|pass_host            |optional|`pass` pass the client request host, `node` not pass the client request host, using the upstream node host, `rewrite` rewrite host by the configured `upstream_host`.|
-|upstream_host    |optional|This option is only valid if the `pass_host` is `rewrite`.|
 
 Create an upstream object use case:
 
@@ -274,12 +247,10 @@ Create an upstream object use case:
 curl http://127.0.0.1:9080/apisix/admin/upstreams/1 -H 'X-API-KEY: edd1c9f034335f136f87ad84b625c8f1' -X PUT -d '
 {
     "type": "roundrobin",
-    "k8s_deployment_info": {
-        "namespace": "test-namespace",
-        "deploy_name": "test-deploy-name",
-        "service_name": "test-service-name",
-        "backend_type": "pod",
-        "port": 8080
+    "nodes": {
+        "127.0.0.1:80": 1,
+        "127.0.0.2:80": 2,
+        "foo.com:80": 3
     }
 }'
 
@@ -369,13 +340,10 @@ curl http://127.0.0.1:9080/apisix/admin/routes/1 -H 'X-API-KEY: edd1c9f034335f13
 More details can be found in [Health Checking Documents](health-check.md).
 
 Here are some examples of configurations using different `hash_on` types:
-
-#### Consumer
-
+##### Consumer
 Create a consumer object:
-
 ```shell
-curl http://127.0.0.1:9080/apisix/admin/consumers -H 'X-API-KEY: edd1c9f034335f136f87ad84b625c8f1' -X PUT -d '
+curl http://127.0.0.1:9080/apisix/admin/consumers -H 'X-API-KEY: edd1c9f034335f136f87ad84b625c8f1' -X PUT -d `
 {
     "username": "jack",
     "plugins": {
@@ -383,11 +351,9 @@ curl http://127.0.0.1:9080/apisix/admin/consumers -H 'X-API-KEY: edd1c9f034335f1
             "key": "auth-jack"
         }
     }
-}'
+}`
 ```
-
 Create route object and enable `key-auth` plugin authentication:
-
 ```shell
 curl http://127.0.0.1:9080/apisix/admin/routes/1 -H 'X-API-KEY: edd1c9f034335f136f87ad84b625c8f1' -X PUT -d '
 {
@@ -405,17 +371,13 @@ curl http://127.0.0.1:9080/apisix/admin/routes/1 -H 'X-API-KEY: edd1c9f034335f13
     "uri": "/server_port"
 }'
 ```
-
 Test request, the `consumer_id` after authentication is passed will be used as the hash value of the load balancing hash algorithm:
-
 ```shell
 curl http://127.0.0.1:9080/server_port -H "apikey: auth-jack"
 ```
 
-#### Cookie
-
+##### Cookie
 Create route and upstream object, `hash_on` is `cookie`:
-
 ```shell
 curl http://127.0.0.1:9080/apisix/admin/routes/1 -H 'X-API-KEY: edd1c9f034335f136f87ad84b625c8f1' -X PUT -d '
 {
@@ -431,17 +393,13 @@ curl http://127.0.0.1:9080/apisix/admin/routes/1 -H 'X-API-KEY: edd1c9f034335f13
     }
 }'
 ```
-
 The client requests with `Cookie`:
-
 ```shell
  curl http://127.0.0.1:9080/hash_on_cookie -H "Cookie: sid=3c183a30cffcda1408daf1c61d47b274"
 ```
 
-#### Header
-
+##### Header
 Create route and upstream object, `hash_on` is `header`, `key` is `Content-Type`:
-
 ```shell
 curl http://127.0.0.1:9080/apisix/admin/routes/1 -H 'X-API-KEY: edd1c9f034335f136f87ad84b625c8f1' -X PUT -d '
 {
@@ -459,12 +417,12 @@ curl http://127.0.0.1:9080/apisix/admin/routes/1 -H 'X-API-KEY: edd1c9f034335f13
 ```
 
 The client requests with header `Content-Type`:
-
 ```shell
  curl http://127.0.0.1:9080/hash_on_header -H 'X-API-KEY: edd1c9f034335f136f87ad84b625c8f1' -H "Content-Type: application/json"
 ```
 
 [Back to top](#Table-of-contents)
+
 
 ## Router
 
@@ -477,8 +435,8 @@ Set the route that best suits your business needs in the local configuration `co
         * `Absolute match `: Complete match for the given `uri` , such as `/foo/bar`,`/foo/glo`.
         * `Prefix match`: Use `*` at the end to represent the given `uri` as a prefix match. For example, `/foo*` allows matching `/foo/`, `/foo/a` and `/foo/b`.
         * `match priority`: first try absolute match, if you can't hit absolute match, try prefix match.
-        * `Any filter attribute`: Allows you to specify any Nginx built-in variable as a filter, such as URL request parameters, request headers, cookies, and so on.
-    * `radixtree_host_uri`: Use `host + uri` as the primary index (based on the `radixtree` engine), matching both host and URL for the current request.
+        * `Any filter attribute`: Allows you to specify any Ningx built-in variable as a filter, such as uri request parameters, request headers, cookies, and so on.
+    * `radixtree_host_uri`: Use `host + uri` as the primary index (based on the `radixtree` engine), matching both host and uri for the current request.
 
 * `apisix.router.ssl`: SSL loads the matching route.
     * `radixtree_sni`: (Default) Use `SNI` (Server Name Indication) as the primary index (based on the radixtree engine).
@@ -561,47 +519,15 @@ HTTP/1.1 503 Service Temporarily Unavailable
 
 ```
 
-Use the [consumer-restriction](plugins/consumer-restriction.md) plug-in to restrict the access of Jack to this API.
-
-# Add Jack to the blacklist
-$ curl http://127.0.0.1:9080/apisix/admin/routes/1 -H 'X-API-KEY: edd1c9f034335f136f87ad84b625c8f1' -X PUT -d '
-{
-    "plugins": {
-        "key-auth": {},
-        "consumer-restriction": {
-            "blacklist": [
-                "jack"
-            ]
-        }
-    },
-    "upstream": {
-        "nodes": {
-            "127.0.0.1:1980": 1
-        },
-        "type": "roundrobin"
-    },
-    "uri": "/hello"
-}'
-
-# Repeated tests, all return 403; Jack is forbidden to access this API
-$ curl http://127.0.0.1:9080/hello -H 'apikey: auth-one' -I
-HTTP/1.1 403
-...
-
-```
-
 [Back to top](#Table-of-contents)
 
 ## Global Rule
-
 [Plugin](#Plugin) just can be binded to [Service](#Service) or [Route](#Route), if we want a [Plugin](#Plugin) work on all requests, how to do it?
 We can register a global [Plugin](#Plugin) with `GlobalRule`:
-
 ```shell
 curl -X PUT \
   https://{apisix_listen_address}/apisix/admin/global_rules/1 \
   -H 'Content-Type: application/json' \
-  -H 'X-API-KEY: edd1c9f034335f136f87ad84b625c8f1' \
   -d '{
         "plugins": {
             "limit-count": {
@@ -614,11 +540,9 @@ curl -X PUT \
         }
     }'
 ```
-
 Now, the `limit-count` plugin will work on all requets
 
 we can list all `GlobalRule` via admin api as below:
-
 ```shell
 curl https://{apisix_listen_address}/apisix/admin/global_rules
 ```

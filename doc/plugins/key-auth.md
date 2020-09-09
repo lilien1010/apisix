@@ -17,7 +17,7 @@
 #
 -->
 
-- [中文](../zh-cn/plugins/key-auth.md)
+[Chinese](key-auth-cn.md)
 
 # Summary
 - [**Name**](#name)

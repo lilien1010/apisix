@@ -17,7 +17,7 @@
 #
 -->
 
-- [中文](../zh-cn/plugins/basic-auth.md)
+# [Chinese](basic-auth-cn.md)
 
 # Summary
 

@@ -17,7 +17,8 @@
 #
 -->
 
-[Chinese](prometheus-cn.md)
+- [中文](../zh-cn/plugins/prometheus.md)
+
 # prometheus
 
 This plugin exposes metrics in Prometheus Exposition format.
@@ -64,7 +65,7 @@ We fetch the metric data from the specified url `/apisix/prometheus/metrics`.
 curl -i http://127.0.0.1:9080/apisix/prometheus/metrics
 ```
 
-Puts this uri address into prometheus, and it will automatically fetch
+Puts this URL address into prometheus, and it will automatically fetch
 these metric data.
 
 For example like this:
@@ -88,7 +89,9 @@ And we can check the status at prometheus console:
 
 Metrics exported by the plugin can be graphed in Grafana using a drop in dashboard.
 
-You can goto [Grafana meta](https://grafana.com/grafana/dashboards/11719) for `Grafana` meta data.
+Downloads [Grafana dashboard meta](../json/apisix-grafana-dashboard.json) and imports it to Grafana。
+
+Or you can goto [Grafana official](https://grafana.com/grafana/dashboards/11719) for `Grafana` meta data.
 
 ![](../../doc/images/plugin/grafana_1.png)
 

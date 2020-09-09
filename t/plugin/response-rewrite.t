@@ -124,7 +124,7 @@ property "body" validation failed: wrong type: expected string, got number
                     "plugins": {
                         "response-rewrite": {
                             "headers" : {
-                                "X-Server-id": 3,
+                                "X-Server-id": 3,                
                                 "X-Server-status": "on",
                                 "Content-Type": ""
                             },
@@ -169,7 +169,7 @@ passed
             if not res then
                 ngx.say(err)
                 return
-            end
+            end 
 
             if res.headers['Content-Type'] then
                 ngx.say('fail content-type should not be exist, now is'..res.headers['Content-Type'])
@@ -352,149 +352,5 @@ invalid field length in header
 GET /t
 --- response_body
 invalid type as header value
---- no_error_log
-[error]
-
-
-
-=== TEST 12: set body in base64
---- config
-    location /t {
-        content_by_lua_block {
-            local t = require("lib.test_admin").test
-            local code, body = t('/apisix/admin/routes/1',
-                 ngx.HTTP_PUT,
-                 [[{
-                    "plugins": {
-                        "response-rewrite": {
-                            "body": "SGVsbG8K",
-                            "body_base64": true
-                        }
-                    },
-                    "upstream": {
-                        "nodes": {
-                            "127.0.0.1:1980": 1
-                        },
-                        "type": "roundrobin"
-                    },
-                    "uri": "/hello"
-                }]]
-                )
-
-            if code >= 300 then
-                ngx.status = code
-            end
-            ngx.say(body)
-        }
-    }
---- request
-GET /t
---- response_body
-passed
---- no_error_log
-[error]
-
-
-
-=== TEST 13: check base64 content
---- request
-GET /hello
---- response_body
-Hello
---- no_error_log
-[error]
-
-
-
-=== TEST 14: set body with not well formed base64
---- config
-    location /t {
-        content_by_lua_block {
-            local plugin = require("apisix.plugins.response-rewrite")
-            local ok, err = plugin.check_schema({
-                            body = "1",
-                            body_base64 =  true
-            })
-            if not ok then
-                ngx.say(err)
-                return
-            end
-        }
-    }
---- request
-GET /t
---- response_body
-invalid base64 content
---- no_error_log
-[error]
-
-
-
-=== TEST 15: print the plugin `conf` in etcd, no dirty data
---- config
-    location /t {
-        content_by_lua_block {
-            local core = require("apisix.core")
-            local t = require("lib.test_admin").test
-            local encode_with_keys_sorted = require("lib.json_sort").encode
-
-            local code, _, body = t('/apisix/admin/routes/1',
-                ngx.HTTP_PUT,
-                [[{
-                    "plugins": {
-                        "response-rewrite": {
-                            "headers" : {
-                                "X-Server-id": 3,
-                                "X-Server-status": "on",
-                                "Content-Type": ""
-                            },
-                            "body": "new body\n"
-                        }
-                    },
-                    "uri": "/with_header"
-                }]]
-                )
-
-            if code >= 300 then
-                ngx.status = code
-            end
-
-            local resp_data = core.json.decode(body)
-            ngx.say(encode_with_keys_sorted(resp_data.node.value.plugins))
-        }
-    }
---- request
-GET /t
---- response_body
-{"response-rewrite":{"body":"new body\n","headers":{"Content-Type":"","X-Server-id":3,"X-Server-status":"on"}}}
---- no_error_log
-[error]
-
-
-
-=== TEST 16:  additional property
---- config
-    location /t {
-        content_by_lua_block {
-            local plugin = require("apisix.plugins.response-rewrite")
-            local ok, err = plugin.check_schema({
-                body = 'Hello world',
-                headers = {
-                    ["X-Server-id"] = 3
-                },
-                invalid_att = "invalid",
-            })
-
-            if not ok then
-                ngx.say(err)
-            else
-                ngx.say("done")
-            end
-        }
-    }
---- request
-GET /t
---- response_body
-additional properties forbidden, found invalid_att
 --- no_error_log
 [error]

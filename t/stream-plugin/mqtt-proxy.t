@@ -14,6 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+BEGIN {
+    $ENV{TEST_NGINX_USE_HUP} = 1;
+}
 
 use t::APISIX 'no_plan';
 

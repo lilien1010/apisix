@@ -22,6 +22,19 @@ worker_connections(256);
 no_root_location();
 no_shuffle();
 
+sub read_file($) {
+    my $infile = shift;
+    open my $in, $infile
+        or die "cannot open $infile for reading: $!";
+    my $cert = do { local $/; <$in> };
+    close $in;
+    $cert;
+}
+
+our $yaml_config = read_file("conf/config.yaml");
+$yaml_config =~ s/node_listen: 9080/node_listen: 1984/;
+$yaml_config =~ s/enable_heartbeat: true/enable_heartbeat: false/;
+$yaml_config =~ s/admin_key:/admin_key_useless:/;
 
 run_tests();
 
@@ -51,6 +64,7 @@ __DATA__
             ngx.say(body)
         }
     }
+--- yaml_config eval: $::yaml_config
 --- request
 GET /t
 --- response_body
@@ -63,6 +77,7 @@ passed
 === TEST 2: hit routes
 --- request
 GET /server_port/aa
+--- yaml_config eval: $::yaml_config
 --- response_body eval
 1980
 --- no_error_log
@@ -94,6 +109,7 @@ GET /server_port/aa
             ngx.say(body)
         }
     }
+--- yaml_config eval: $::yaml_config
 --- request
 GET /t
 --- response_body
@@ -106,6 +122,7 @@ passed
 === TEST 4: hit routes
 --- request
 GET /server_port/aa
+--- yaml_config eval: $::yaml_config
 --- response_body eval
 1980
 --- no_error_log
@@ -137,6 +154,7 @@ GET /server_port/aa
             ngx.say(body)
         }
     }
+--- yaml_config eval: $::yaml_config
 --- request
 GET /t
 --- response_body
@@ -149,6 +167,7 @@ passed
 === TEST 6: hit routes
 --- request
 GET /server_port/aa
+--- yaml_config eval: $::yaml_config
 --- response_body eval
 1981
 --- no_error_log
@@ -170,6 +189,7 @@ GET /server_port/aa
             ngx.say(body)
         }
     }
+--- yaml_config eval: $::yaml_config
 --- request
 GET /t
 --- response_body

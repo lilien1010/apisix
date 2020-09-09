@@ -161,7 +161,7 @@ GET /hello
 hello world
 --- no_error_log
 [error]
---- wait: 1
+--- wait: 0.2
 
 
 
@@ -176,10 +176,7 @@ hello world
                         "plugins": {
                             "tcp-logger": {
                                 "host": "312.0.0.1",
-                                "port": 2000,
-                                "batch_max_size": 1,
-                                "max_retry_count": 2,
-                                "retry_delay": 0
+                                "port": 2000
                             }
                         },
                         "upstream": {
@@ -196,10 +193,7 @@ hello world
                             "plugins": {
                                 "tcp-logger": {
                                     "host": "312.0.0.1",
-                                    "port": 2000,
-                                    "batch_max_size": 1,
-                                    "max_retry_count": 2,
-                                    "retry_delay": 0
+                                    "port": 2000
                                 }
                             },
                             "upstream": {
@@ -233,4 +227,4 @@ GET /t
 --- error_log
 failed to connect to TCP server: host[312.0.0.1] port[2000]
 [error]
---- wait: 1.5
+--- wait: 0.2

@@ -62,7 +62,7 @@ done
 --- request
 GET /t
 --- response_body
-value should match only one schema, but matches none
+property "username" validation failed: wrong type: expected string, got number
 done
 --- no_error_log
 [error]

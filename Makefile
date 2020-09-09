@@ -36,7 +36,7 @@ endif
 
 LUAJIT_DIR ?= $(shell ${OR_EXEC} -V 2>&1 | grep prefix | grep -Eo 'prefix=(.*)/nginx\s+--' | grep -Eo '/.*/')luajit
 
-### help:             Show Makefile rules.
+### help:             Show Makefile rules
 .PHONY: help
 help: default
 	@echo Makefile rules:
@@ -79,9 +79,13 @@ init: default
 ### run:              Start the apisix server
 .PHONY: run
 run: default
+ifeq ("$(wildcard logs/nginx.pid)", "")
 	mkdir -p logs
 	mkdir -p /tmp/apisix_cores/
 	$(OR_EXEC) -p $$PWD/ -c $$PWD/conf/nginx.conf
+else
+	@echo "APISIX is running..."
+endif
 
 
 ### stop:             Stop the apisix server
@@ -108,56 +112,64 @@ reload: default
 	$(OR_EXEC) -p $$PWD/  -c $$PWD/conf/nginx.conf -s reload
 
 
-### install:          Install the apisix
+### install:          Install the apisix (only for luarocks)
 .PHONY: install
-install:
+install: default
+	$(INSTALL) -d /usr/local/apisix/
 	$(INSTALL) -d /usr/local/apisix/logs/
 	$(INSTALL) -d /usr/local/apisix/conf/cert
 	$(INSTALL) conf/mime.types /usr/local/apisix/conf/mime.types
 	$(INSTALL) conf/config.yaml /usr/local/apisix/conf/config.yaml
+	$(INSTALL) conf/config-default.yaml /usr/local/apisix/conf/config-default.yaml
 	$(INSTALL) conf/cert/apisix.* /usr/local/apisix/conf/cert/
 
-	$(INSTALL) -d $(INST_LUADIR)/apisix/lua
-	$(INSTALL) lua/*.lua $(INST_LUADIR)/apisix/lua/
+	$(INSTALL) -d $(INST_LUADIR)/apisix
+	$(INSTALL) apisix/*.lua $(INST_LUADIR)/apisix/
 
-	$(INSTALL) -d $(INST_LUADIR)/apisix/lua/apisix
-	$(INSTALL) lua/apisix/*.lua $(INST_LUADIR)/apisix/lua/apisix/
+	$(INSTALL) -d $(INST_LUADIR)/apisix/admin
+	$(INSTALL) apisix/admin/*.lua $(INST_LUADIR)/apisix/admin/
 
-	$(INSTALL) -d $(INST_LUADIR)/apisix/lua/apisix/admin
-	$(INSTALL) lua/apisix/admin/*.lua $(INST_LUADIR)/apisix/lua/apisix/admin/
+	$(INSTALL) -d $(INST_LUADIR)/apisix/balancer
+	$(INSTALL) apisix/balancer/*.lua $(INST_LUADIR)/apisix/balancer/
 
-	$(INSTALL) -d $(INST_LUADIR)/apisix/lua/apisix/core
-	$(INSTALL) lua/apisix/core/*.lua $(INST_LUADIR)/apisix/lua/apisix/core/
+	$(INSTALL) -d $(INST_LUADIR)/apisix/core
+	$(INSTALL) apisix/core/*.lua $(INST_LUADIR)/apisix/core/
 
-	$(INSTALL) -d $(INST_LUADIR)/apisix/lua/apisix/http
-	$(INSTALL) lua/apisix/http/*.lua $(INST_LUADIR)/apisix/lua/apisix/http/
+	$(INSTALL) -d $(INST_LUADIR)/apisix/http
+	$(INSTALL) apisix/http/*.lua $(INST_LUADIR)/apisix/http/
 
-	$(INSTALL) -d $(INST_LUADIR)/apisix/lua/apisix/http/router
-	$(INSTALL) lua/apisix/http/router/*.lua $(INST_LUADIR)/apisix/lua/apisix/http/router/
+	$(INSTALL) -d $(INST_LUADIR)/apisix/http/router
+	$(INSTALL) apisix/http/router/*.lua $(INST_LUADIR)/apisix/http/router/
 
-	$(INSTALL) -d $(INST_LUADIR)/apisix/lua/apisix/plugins
-	$(INSTALL) lua/apisix/plugins/*.lua $(INST_LUADIR)/apisix/lua/apisix/plugins/
+	$(INSTALL) -d $(INST_LUADIR)/apisix/discovery
+	$(INSTALL) apisix/discovery/*.lua $(INST_LUADIR)/apisix/discovery/
 
-	$(INSTALL) -d $(INST_LUADIR)/apisix/lua/apisix/plugins/grpc-transcode
-	$(INSTALL) lua/apisix/plugins/grpc-transcode/*.lua $(INST_LUADIR)/apisix/lua/apisix/plugins/grpc-transcode/
+	$(INSTALL) -d $(INST_LUADIR)/apisix/plugins
+	$(INSTALL) apisix/plugins/*.lua $(INST_LUADIR)/apisix/plugins/
 
-	$(INSTALL) -d $(INST_LUADIR)/apisix/lua/apisix/plugins/limit-count
-	$(INSTALL) lua/apisix/plugins/limit-count/*.lua $(INST_LUADIR)/apisix/lua/apisix/plugins/limit-count/
+	$(INSTALL) -d $(INST_LUADIR)/apisix/plugins/grpc-transcode
+	$(INSTALL) apisix/plugins/grpc-transcode/*.lua $(INST_LUADIR)/apisix/plugins/grpc-transcode/
 
-	$(INSTALL) -d $(INST_LUADIR)/apisix/lua/apisix/plugins/prometheus
-	$(INSTALL) lua/apisix/plugins/prometheus/*.lua $(INST_LUADIR)/apisix/lua/apisix/plugins/prometheus/
+	$(INSTALL) -d $(INST_LUADIR)/apisix/plugins/limit-count
+	$(INSTALL) apisix/plugins/limit-count/*.lua $(INST_LUADIR)/apisix/plugins/limit-count/
 
-	$(INSTALL) -d $(INST_LUADIR)/apisix/lua/apisix/plugins/zipkin
-	$(INSTALL) lua/apisix/plugins/zipkin/*.lua $(INST_LUADIR)/apisix/lua/apisix/plugins/zipkin/
+	$(INSTALL) -d $(INST_LUADIR)/apisix/plugins/prometheus
+	$(INSTALL) apisix/plugins/prometheus/*.lua $(INST_LUADIR)/apisix/plugins/prometheus/
 
-	$(INSTALL) -d $(INST_LUADIR)/apisix/lua/apisix/stream/plugins
-	$(INSTALL) lua/apisix/stream/plugins/*.lua $(INST_LUADIR)/apisix/lua/apisix/stream/plugins/
+	$(INSTALL) -d $(INST_LUADIR)/apisix/plugins/zipkin
+	$(INSTALL) apisix/plugins/zipkin/*.lua $(INST_LUADIR)/apisix/plugins/zipkin/
 
-	$(INSTALL) -d $(INST_LUADIR)/apisix/lua/apisix/stream/router
-	$(INSTALL) lua/apisix/stream/router/*.lua $(INST_LUADIR)/apisix/lua/apisix/stream/router/
+	$(INSTALL) -d $(INST_LUADIR)/apisix/plugins/skywalking
+	$(INSTALL) apisix/plugins/skywalking/*.lua $(INST_LUADIR)/apisix/plugins/skywalking/
 
-	$(INSTALL) -d $(INST_LUADIR)/apisix/lua/apisix/utils
-	$(INSTALL) lua/apisix/utils/*.lua $(INST_LUADIR)/apisix/lua/apisix/utils/
+	$(INSTALL) -d $(INST_LUADIR)/apisix/stream/plugins
+	$(INSTALL) apisix/stream/plugins/*.lua $(INST_LUADIR)/apisix/stream/plugins/
+
+	$(INSTALL) -d $(INST_LUADIR)/apisix/stream/router
+	$(INSTALL) apisix/stream/router/*.lua $(INST_LUADIR)/apisix/stream/router/
+
+	$(INSTALL) -d $(INST_LUADIR)/apisix/utils
+	$(INSTALL) apisix/utils/*.lua $(INST_LUADIR)/apisix/utils/
 
 	$(INSTALL) README.md $(INST_CONFDIR)/README.md
 	$(INSTALL) bin/apisix $(INST_BINDIR)/apisix

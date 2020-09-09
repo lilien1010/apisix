@@ -17,10 +17,11 @@
 #
 -->
 
-[Chinese](https-cn.md)
+[Chinese](zh-cn/https.md)
+
 ### HTTPS
 
-`APISIX` supports to load a specific SSL certificate by TLS extension Server Name Indication (SNI).
+`APISIX` supports to load multiple SSL certificates by TLS extension Server Name Indication (SNI).
 
 ### Single SNI
 
@@ -67,7 +68,6 @@ that means it can accept more than one domain, eg: `www.test.com` or `mail.test.
 
 Here is an example, please pay attention on the field `sni`.
 
-
 ```shell
 curl http://127.0.0.1:9080/apisix/admin/ssl/1 -H 'X-API-KEY: edd1c9f034335f136f87ad84b625c8f1' -X PUT -d '
 {
@@ -103,3 +103,18 @@ curl --resolve 'www.test.com:9443:127.0.0.1' https://www.test.com:9443/hello  -v
 If your SSL certificate may contain more than one domain, like `www.test.com`
 and `mail.test.com`, then you can more ssl object for each domain, that is a
 most simple way.
+
+### multiple certificates for a single domain
+
+If you want to configure multiple certificate for a single domain, for
+instance, supporting both the
+[ECC](https://en.wikipedia.org/wiki/Elliptic-curve_cryptography)
+and RSA key-exchange algorithm, then just configure the extra certificates (the
+first certificate and private key should be still put in `cert` and `key`) and
+private keys by `certs` and `keys`.
+
+* `certs`: PEM-encoded certificate array.
+* `keys`: PEM-encoded private key array.
+
+`APISIX` will pair certificate and private key with the same indice as a SSL key
+pair. So the length of `certs` and `keys` must be same.
